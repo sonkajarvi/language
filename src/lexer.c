@@ -138,9 +138,9 @@ static int read_punctuator(struct parser *parser)
     case '|':
         if (peek(parser) == '|') {
             read(parser);
-            RETURN(TOKEN_LOGICAL_NOT);
+            RETURN(TOKEN_LOGICAL_OR);
         }
-        RETURN(TOKEN_BITWISE_NOT);
+        RETURN(TOKEN_BITWISE_OR);
 
     case '>':
         if (peek(parser) == '=') {
