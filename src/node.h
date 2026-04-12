@@ -25,6 +25,7 @@ struct node {
     struct node *next, *child;
 };
 
+void free_node(struct node *node);
 void print_node(struct node *node);
 
 struct node *new_identifier(const char *begin, const char *end);

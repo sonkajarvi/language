@@ -19,6 +19,25 @@
             printf("%s", INDENT_STR);                                           \
     } while (0)
 
+void free_node(struct node *node)
+{
+    if (!node)
+        return;
+
+    switch (node->type) {
+    case NODE_BINARY_OP:
+        free_node(node->child->next);
+        free_node(node->child);
+        break;
+
+    case NODE_UNARY_OP:
+        free_node(node->child);
+        break;
+    }
+
+    free(node);
+}
+
 void __print_node(struct node *node, int indent)
 {
     if (!node) {
