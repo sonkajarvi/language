@@ -15,11 +15,19 @@
 
 #include "token.h"
 
+enum {
+    EXPECTED_EXPRESSION = 1,
+    EXPECTED_RIGHT_PARENTHESIS,
+    OUT_OF_MEMORY,
+};
+
 struct parser {
     const char *ptr, *end;
 
     struct token curr, peek;
     bool has_peeked;
+
+    int errno;
 };
 
 static inline void parser_init(struct parser *parser, const char *src, size_t len)

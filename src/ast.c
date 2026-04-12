@@ -54,71 +54,116 @@ static inline int token_to_op(struct token *token)
  * primary =/ identifier
  * primary =/ ( "-" / "~" / "!" ) primary
  */
-static struct node *parse_primary(struct parser *parser)
+static struct node *_parse_primary_expression(struct parser *parser)
 {
-    struct node *node = NULL;
+    struct node *expr, *ret = NULL;
     struct token *token;
     int op;
 
     token = advance_token(parser);
+
     switch (token->type) {
     case TOKEN_PAREN_LEFT:
-        node = parse_expression(parser);
-        assert(node);
+        expr = parse_expression(parser);
+        if (!expr)
+            break;
 
         token = advance_token(parser);
-        assert(token->type == TOKEN_PAREN_RIGHT);
+
+        if (token->type != TOKEN_PAREN_RIGHT) {
+            free_node(expr);
+            parser->errno = EXPECTED_RIGHT_PARENTHESIS;
+        } else {
+            ret = expr;
+        }
         break;
 
     case TOKEN_NUMBER:
-        node = new_number(token->begin, token->end);
+        ret = new_number(token->begin, token->end);
+        if (!ret)
+            parser->errno = OUT_OF_MEMORY;
         break;
 
     case TOKEN_IDENTIFIER:
-        node = new_identifier(token->begin, token->end);
+        ret = new_identifier(token->begin, token->end);
+        if (!ret)
+            parser->errno = OUT_OF_MEMORY;
         break;
 
     case TOKEN_SUBTRACT:
     case TOKEN_BITWISE_NOT:
     case TOKEN_LOGICAL_NOT:
         op = token_to_op(token);
-        node = new_unary_op(op, parse_primary(parser));
-        assert(node);
+
+        expr = _parse_primary_expression(parser);
+        if (!expr)
+            break;
+
+        ret = new_unary_op(op, expr);
+        if (!ret) {
+            free_node(expr);
+            parser->errno = OUT_OF_MEMORY;
+        }
         break;
 
     default:
-        /* Expected '(', number or identifier. */
+        parser->errno = EXPECTED_EXPRESSION;
         break;
     }
 
-    return node;
+    return ret;
 }
 
-static struct node *parse_expression_1(struct parser *parser, struct node *lhs, int min_precedence)
+static struct node *_parse_expression(struct parser *parser, struct node *lhs, int min_precedence)
 {
-    struct node *rhs;
-    struct token *lookahead;
+    struct node *rhs_outer, *rhs_inner;
     int op;
 
-    peek_token(parser);
-    lookahead = &parser->peek;
-
-    while (op_precedence(token_to_op(lookahead)) >= min_precedence) {
-        op = token_to_op(lookahead);
+    op = token_to_op(peek_token(parser));
+    /*
+     * If the token is not an operator, we skip the loop and return @lhs as is.
+     */
+    while (op_precedence(op) >= min_precedence) {
         advance_token(parser);
-        rhs = parse_primary(parser);
+        op = token_to_op(peek_token(parser));
 
-        lookahead = peek_token(parser);
-        while (op_precedence(token_to_op(lookahead)) > op_precedence(op)) {
-            rhs = parse_expression_1(parser, rhs, op_precedence(op) + 1);
-            lookahead = peek_token(parser);
+        rhs_outer = _parse_primary_expression(parser);
+        if (!rhs_outer)
+            return NULL;
+
+        while (op_precedence(token_to_op(peek_token(parser))) > op_precedence(op)) {
+            rhs_inner = _parse_expression(parser, rhs_outer, op_precedence(op) + 1);
+            if (!rhs_inner)
+                return NULL;
+
+            rhs_outer = rhs_inner;
         }
-        lhs = new_binary_op(op, lhs, rhs);
+
+        lhs = new_binary_op(op, lhs, rhs_outer);
+        if (!lhs) {
+            free_node(rhs_outer);
+            parser->errno = OUT_OF_MEMORY;
+            return NULL;
+        }
     }
+
     return lhs;
 }
 
 struct node *parse_expression(struct parser *parser)
 {
-    return parse_expression_1(parser, parse_primary(parser), 0);
+    struct node *lhs, *ret;
+
+    ret = _parse_primary_expression(parser);
+    if (!ret)
+        goto out;
+
+    lhs = ret;
+
+    ret = _parse_expression(parser, lhs, 0);
+    if (!ret)
+        free_node(lhs);
+
+out:
+    return ret;
 }
