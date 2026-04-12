@@ -30,6 +30,8 @@ struct parser {
     int errno;
 };
 
+void init_keywords(void);
+
 static inline void parser_init(struct parser *parser, const char *src, size_t len)
 {
     assert(parser);
@@ -37,6 +39,13 @@ static inline void parser_init(struct parser *parser, const char *src, size_t le
     memset(parser, 0, sizeof(*parser));
     parser->ptr = src;
     parser->end = parser->ptr + len;
+
+    init_keywords();
+}
+
+static inline void parser_init_string(struct parser *parser, const char *src)
+{
+    parser_init(parser, src, strlen(src));
 }
 
 struct token *peek_token(struct parser *parser);

@@ -6,6 +6,7 @@
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "ast.h"
@@ -78,8 +79,45 @@ static inline bool is_identifier(int ch)
     }
 }
 
+struct keyword_pair {
+    const char *keyword;
+    int token;
+};
+
+static struct keyword_pair __keywords[KEYWORD_COUNT];
+
+void init_keywords(void)
+{
+    int i = 0;
+
+#define X(keyword_, token_)                                                     \
+    __keywords[i].keyword = keyword_;                                           \
+    __keywords[i].token = token_;                                               \
+    i++;
+
+    X("bool", TOKEN_BOOL);
+    X("int", TOKEN_INT);
+    X("real", TOKEN_REAL);
+    X("string", TOKEN_STRING);
+
+#undef X
+}
+
+static int keyword_to_token(const char *keyword, size_t len)
+{
+    for (int i = 0; i < KEYWORD_COUNT; i++) {
+        if (strncmp(keyword, __keywords[i].keyword, len) == 0)
+            return __keywords[i].token;
+    }
+
+    return -1;
+}
+
+
 static int read_identifier(struct parser *parser)
 {
+    int type;
+
     parser->peek.begin = parser->ptr;
 
     read(parser);
@@ -91,6 +129,10 @@ static int read_identifier(struct parser *parser)
 
     parser->peek.type = TOKEN_IDENTIFIER;
     parser->peek.end = parser->ptr;
+
+    type = keyword_to_token(parser->peek.begin, parser->peek.end - parser->peek.begin);
+    if (type != -1)
+        parser->peek.type = type;
 
     return 0;
 }

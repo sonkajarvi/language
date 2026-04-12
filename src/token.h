@@ -12,6 +12,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#define KEYWORD_COUNT 4
+
 #define TOKEN_LIST(x)                                                           \
     x(NONE)                     /* This is first so it's always 0. */           \
     x(EOF)                      /* End of file. */                              \
@@ -23,11 +25,13 @@
     x(BITWISE_SHIFT_LEFT)       /* >> */                                        \
     x(BITWISE_SHIFT_RIGHT)      /* << */                                        \
     x(BITWISE_XOR)              /* ^ */                                         \
+    x(BOOL)                     /* bool */                                      \
     x(DIVIDE)                   /* / */                                         \
     x(EQUALS)                   /* == */                                        \
     x(GREATER_THAN)             /* > */                                         \
     x(GREATER_THAN_EQUALS)      /* >= */                                        \
     x(IDENTIFIER)                                                               \
+    x(INT)                      /* int */                                       \
     x(LESS_THAN)                /* < */                                         \
     x(LESS_THAN_EQUALS)         /* <= */                                        \
     x(MULTIPLY)                 /* * */                                         \
@@ -39,6 +43,8 @@
     x(LOGICAL_OR)               /* || */                                        \
     x(PAREN_LEFT)               /* ( */                                         \
     x(PAREN_RIGHT)              /* ) */                                         \
+    x(REAL)                     /* real */                                      \
+    x(STRING)                   /* string */                                    \
     x(SUBTRACT)                 /* - */
 
 enum {
