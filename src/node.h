@@ -20,9 +20,30 @@ enum {
 };
 
 struct node {
-    int type, op;
+    int type;
+    struct node *next;
+};
+
+struct identifier {
+    struct node node;
     const char *begin, *end;
-    struct node *next, *child;
+};
+
+struct number {
+    struct node node;
+    const char *begin, *end;
+};
+
+struct binary_op {
+    struct node node;
+    int op;
+    struct node *expr;
+};
+
+struct unary_op {
+    struct node node;
+    int op;
+    struct node *expr;
 };
 
 void free_node(struct node *node);

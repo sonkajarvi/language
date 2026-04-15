@@ -19,6 +19,8 @@
             printf("%s", INDENT_STR);                                           \
     } while (0)
 
+#define AS(T, x) ((T *)x)
+
 void free_node(struct node *node)
 {
     if (!node)
@@ -26,12 +28,12 @@ void free_node(struct node *node)
 
     switch (node->type) {
     case NODE_BINARY_OP:
-        free_node(node->child->next);
-        free_node(node->child);
+        free_node(AS(struct binary_op, node)->expr->next);
+        free_node(AS(struct binary_op, node)->expr);
         break;
 
     case NODE_UNARY_OP:
-        free_node(node->child);
+        free_node(AS(struct unary_op, node)->expr);
         break;
     }
 
@@ -40,6 +42,8 @@ void free_node(struct node *node)
 
 void __print_node(struct node *node, int indent)
 {
+    const char *begin, *end;
+
     if (!node) {
         PRINT_INDENT(indent);
         printf("<null>\n");
@@ -51,7 +55,10 @@ void __print_node(struct node *node, int indent)
         PRINT_INDENT(indent);
         printf("Identifier: ");
 
-        fwrite(node->begin, node->end - node->begin, 1, stdout);
+        begin = AS(struct identifier, node)->begin;
+        end = AS(struct identifier, node)->end;
+        fwrite(begin, end - begin, 1, stdout);
+
         putchar('\n');
         break;
 
@@ -59,7 +66,10 @@ void __print_node(struct node *node, int indent)
         PRINT_INDENT(indent);
         printf("Number: ");
 
-        fwrite(node->begin, node->end - node->begin, 1, stdout);
+        begin = AS(struct number, node)->begin;
+        end = AS(struct number, node)->end;
+        fwrite(begin, end - begin, 1, stdout);
+
         putchar('\n');
         break;
 
@@ -68,15 +78,15 @@ void __print_node(struct node *node, int indent)
         printf("BinaryOp:\n");
 
         PRINT_INDENT(indent + 1);
-        printf("Op: %s\n", op_to_string(node->op));
+        printf("Op: %s\n", op_to_string(AS(struct binary_op, node)->op));
 
         PRINT_INDENT(indent + 1);
         printf("Left:\n");
-        __print_node(node->child, indent + 2);
+        __print_node(AS(struct binary_op, node)->expr, indent + 2);
 
         PRINT_INDENT(indent + 1);
         printf("Right:\n");
-        __print_node(node->child->next, indent + 2);
+        __print_node(AS(struct binary_op, node)->expr->next, indent + 2);
         break;
 
     case NODE_UNARY_OP:
@@ -84,11 +94,11 @@ void __print_node(struct node *node, int indent)
         printf("UnaryOp:\n");
 
         PRINT_INDENT(indent + 1);
-        printf("Op: %s\n", op_to_string(node->op));
+        printf("Op: %s\n", op_to_string(AS(struct unary_op, node)->op));
 
         PRINT_INDENT(indent + 1);
         printf("Expression:\n");
-        __print_node(node->child, indent + 2);
+        __print_node(AS(struct unary_op, node)->expr, indent + 2);
         break;
     }
 }
@@ -98,67 +108,72 @@ void print_node(struct node *node)
     __print_node(node, 0);
 }
 
-static struct node *node_alloc(int type)
+static void *node_alloc(size_t n, int type)
 {
     struct node *node;
 
     if (type < NODE_FIRST || type > NODE_LAST)
         return NULL;
 
-    node = malloc(sizeof(*node));
+    node = malloc(n);
     if (!node)
         return NULL;
 
-    memset(node, 0, sizeof(*node));
+    memset(node, 0, n);
     node->type = type;
+
     return node;
 }
 
 struct node *new_identifier(const char *begin, const char *end)
 {
-    struct node *node;
+    struct identifier *node;
 
-    node = node_alloc(NODE_IDENTIFIER);
+    node = node_alloc(sizeof(*node), NODE_IDENTIFIER);
     if (node) {
         node->begin = begin;
         node->end = end;
     }
-    return node;
+
+    return &node->node;
 }
 
 struct node *new_number(const char *begin, const char *end)
 {
-    struct node *node;
+    struct number *node;
 
-    node = node_alloc(NODE_NUMBER);
+    node = node_alloc(sizeof(*node), NODE_NUMBER);
     if (node) {
         node->begin = begin;
         node->end = end;
     }
-    return node;
+
+    return &node->node;
 }
 
 struct node *new_binary_op(int op, struct node *left, struct node *right)
 {
-    struct node *node;
+    struct binary_op *node;
 
-    node = node_alloc(NODE_BINARY_OP);
+    node = node_alloc(sizeof(*node), NODE_BINARY_OP);
     if (node) {
         node->op = op;
-        node->child = left;
-        node->child->next = right;
+        node->expr = left;
+        node->expr->next = right;
     }
-    return node;
+
+    return &node->node;
 }
 
 struct node *new_unary_op(int op, struct node *expr)
 {
-    struct node *node;
+    struct unary_op *node;
 
-    node = node_alloc(NODE_UNARY_OP);
+    node = node_alloc(sizeof(*node), NODE_UNARY_OP);
     if (node) {
         node->op = op;
-        node->child = expr;
+        node->expr = expr;
     }
-    return node;
+
+    return &node->node;
 }
