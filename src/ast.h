@@ -18,6 +18,10 @@
 enum {
     EXPECTED_EXPRESSION = 1,
     EXPECTED_RIGHT_PARENTHESIS,
+    EXPECTED_LET,
+    EXPECTED_IDENTIFIER,
+    EXPECTED_EQUALS,
+
     OUT_OF_MEMORY,
 };
 
@@ -52,5 +56,6 @@ struct token *peek_token(struct parser *parser);
 struct token *advance_token(struct parser *parser);
 
 struct node *parse_expression(struct parser *parser);
+struct node *parse_variable_statement(struct parser *parser);
 
 #endif /* __SRC_AST_H */

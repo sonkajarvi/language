@@ -167,3 +167,94 @@ struct node *parse_expression(struct parser *parser)
 out:
     return ret;
 }
+
+/*
+ * type = "bool" / "int" / "real" / "string"
+ */
+static int _parse_type(struct parser *parser)
+{
+    struct token *token;
+
+    token = peek_token(parser);
+    if (!token)
+        goto out;
+
+    switch (token->type) {
+    /*
+     * Just return the type for now.
+     */
+    case TOKEN_BOOL:
+    case TOKEN_INT:
+    case TOKEN_REAL:
+    case TOKEN_STRING:
+        token = advance_token(parser);
+        return token->type;
+    }
+
+out:
+    return -1;
+}
+
+/*
+ * variable-statement = "let" identifier type
+ * variable-statement =/ "let" identifier [ type ] "=" expression
+ */
+struct node *parse_variable_statement(struct parser *parser)
+{
+    struct node *ident, *expr = NULL;
+    struct token *token;
+    int type;
+
+    /*
+     * let
+     */
+    token = peek_token(parser);
+    if (!token || token->type != TOKEN_LET) {
+        parser->errno = EXPECTED_LET;
+        return NULL;
+    }
+    advance_token(parser);
+
+    /*
+     * identifier
+     */
+    token = peek_token(parser);
+    if (!token || token->type != TOKEN_IDENTIFIER) {
+        parser->errno = EXPECTED_IDENTIFIER;
+        return NULL;
+    }
+
+    ident = new_identifier(token->begin, token->end);
+    if (!ident) {
+        parser->errno = OUT_OF_MEMORY;
+        return NULL;
+    }
+    advance_token(parser);
+
+    /*
+    * type
+    * [ type ] =
+    */
+    type = _parse_type(parser);
+    token = peek_token(parser);
+    if (!token)
+        return NULL;
+    if (type != -1 && token->type != TOKEN_ASSIGN)
+        goto out;
+
+    token = advance_token(parser);
+    if (token->type != TOKEN_ASSIGN) {
+        parser->errno = EXPECTED_EQUALS;
+        return NULL;
+    }
+
+    /*
+     * expression
+     */
+    expr = parse_expression(parser);
+    if (!expr)
+        return NULL;
+
+out:
+    return new_variable_statement(ident, type, expr);
+}

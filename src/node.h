@@ -13,6 +13,7 @@ enum {
     NODE_NUMBER,
     NODE_BINARY_OP,
     NODE_UNARY_OP,
+    NODE_VARIABLE_STMT,
 
     NODE_COUNT,
     NODE_FIRST = 0,
@@ -46,6 +47,13 @@ struct unary_op {
     struct node *expr;
 };
 
+struct variabe_stmt {
+    struct node node;
+    struct node *ident;
+    int type;
+    struct node *expr;
+};
+
 void free_node(struct node *node);
 void print_node(struct node *node);
 
@@ -53,5 +61,6 @@ struct node *new_identifier(const char *begin, const char *end);
 struct node *new_number(const char *begin, const char *end);
 struct node *new_binary_op(int op, struct node *left, struct node *right);
 struct node *new_unary_op(int op, struct node *expr);
+struct node *new_variable_statement(struct node *ident, int type, struct node *expr);
 
 #endif /* __SRC_NODE_H */

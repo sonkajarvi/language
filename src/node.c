@@ -11,6 +11,7 @@
 
 #include "node.h"
 #include "op.h"
+#include "token.h"
 
 #define INDENT_STR "  "
 #define PRINT_INDENT(indent)                                                    \
@@ -35,9 +36,25 @@ void free_node(struct node *node)
     case NODE_UNARY_OP:
         free_node(AS(struct unary_op, node)->expr);
         break;
+
+    case NODE_VARIABLE_STMT:
+        free_node(AS(struct variabe_stmt, node)->ident);
+        free_node(AS(struct variabe_stmt, node)->expr);
+        break;
     }
 
     free(node);
+}
+
+const char *_type_to_string(int type)
+{
+    switch (type) {
+    case TOKEN_BOOL:    return "bool";
+    case TOKEN_INT:     return "int";
+    case TOKEN_REAL:    return "real";
+    case TOKEN_STRING:  return "string";
+    default:            return "-";
+    }
 }
 
 void __print_node(struct node *node, int indent)
@@ -46,7 +63,7 @@ void __print_node(struct node *node, int indent)
 
     if (!node) {
         PRINT_INDENT(indent);
-        printf("<null>\n");
+        printf("-\n");
         return;
     }
 
@@ -99,6 +116,23 @@ void __print_node(struct node *node, int indent)
         PRINT_INDENT(indent + 1);
         printf("Expression:\n");
         __print_node(AS(struct unary_op, node)->expr, indent + 2);
+        break;
+
+    case NODE_VARIABLE_STMT:
+        PRINT_INDENT(indent);
+        printf("VariableStatement:\n");
+
+        /* identifier */
+        __print_node(AS(struct variabe_stmt, node)->ident, indent + 1);
+
+        /* type */
+        PRINT_INDENT(indent + 1);
+        printf("Type: %s\n", _type_to_string(AS(struct variabe_stmt, node)->type));
+
+        /* expression */
+        PRINT_INDENT(indent + 1);
+        printf("Expression:\n");
+        __print_node(AS(struct variabe_stmt, node)->expr, indent + 2);
         break;
     }
 }
@@ -172,6 +206,20 @@ struct node *new_unary_op(int op, struct node *expr)
     node = node_alloc(sizeof(*node), NODE_UNARY_OP);
     if (node) {
         node->op = op;
+        node->expr = expr;
+    }
+
+    return &node->node;
+}
+
+struct node *new_variable_statement(struct node *ident, int type, struct node *expr)
+{
+    struct variabe_stmt *node;
+
+    node = node_alloc(sizeof(*node), NODE_VARIABLE_STMT);
+    if (node) {
+        node->ident = ident;
+        node->type = type;
         node->expr = expr;
     }
 
