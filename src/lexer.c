@@ -96,9 +96,16 @@ void init_keywords(void)
     i++;
 
     X("bool", TOKEN_BOOL);
+    X("else", TOKEN_ELSE);
+    X("end", TOKEN_END);
+    X("for", TOKEN_FOR);
+    X("fun", TOKEN_FUN);
+    X("if", TOKEN_IF);
     X("int", TOKEN_INT);
+    X("let", TOKEN_LET);
     X("real", TOKEN_REAL);
     X("string", TOKEN_STRING);
+    X("while", TOKEN_WHILE);
 
 #undef X
 }
@@ -141,7 +148,7 @@ static int read_punctuator(struct parser *parser)
 {
 #define RETURN(type_)                                                           \
     {                                                                           \
-        parser->peek.type = type_;                                               \
+        parser->peek.type = type_;                                              \
         return 0;                                                               \
     }
 
@@ -175,7 +182,7 @@ static int read_punctuator(struct parser *parser)
             read(parser);
             RETURN(TOKEN_EQUALS);
         }
-        return -1;
+        RETURN(TOKEN_ASSIGN);
 
     case '|':
         if (peek(parser) == '|') {
