@@ -6,9 +6,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(lang
-    "main.c"
-
+add_library(lang
     "src/ast.c"
     "src/lexer.c"
     "src/node.c"
