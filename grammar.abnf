@@ -1,0 +1,130 @@
+; ABNF grammar for the language
+
+lang = statements
+
+
+; whitespace
+
+ws = *ws-char
+ws-char = %x09                  ; \t
+ws-char =/ %x20                 ; space
+
+newline = [ %x0d ] %x0a
+
+eol = ws [ comment ]
+
+comment = comment-start *comment-char
+comment-start = %x23            ; #
+comment-char = %x09             ; \t
+comment-char =/ %x20-10ffff
+
+
+; statements
+
+statements = statements-part *( newline statements-part )
+statements-part = ws ( [ comment ] / ( statement eol ) )
+
+statement = for-statement
+statement =/ function-statement
+statement =/ if-statement
+statement =/ return-statement
+statement =/ variable-statement
+statement =/ while-statement
+
+
+for-statement = for-keyword ws identifier ws "=" ws expression ws "," ws expression [ ws "," ws expression ] eol newline statements ws end-keyword
+
+function-statement = fun-keyword ws identifier ws args ws type eol newline statements ws end-keyword
+args = "(" ws arg *( ws "," ws arg ) ws ")"
+arg = identifier ws type
+
+if-statement = if-part [ elif-part ] [ else-part ] ws end-keyword
+if-part = if-keyword ws expression eol newline statements
+elif-part = elif-keyword ws expression eol newline statements
+else-part = else-keyword eol newline statements
+
+return-statement = return-keyword ws expression
+
+variable-statement = let-keyword ws identifier ws type
+variable-statement =/ let-keyword ws identifier ws [ type ws ] "=" ws expression
+
+while-statement = while-keyword ws expression eol newline statements ws end-keyword
+
+
+; expressions
+
+expression = logical-expression
+
+logical-expression = relational-expression
+logical-expression =/ relational-expression ws "||" ws relational-expression
+logical-expression =/ relational-expression ws "&&" ws relational-expression
+
+relational-expression = arithmetic-expression
+relational-expression =/ bitwise-expression ws "==" ws bitwise-expression
+relational-expression =/ bitwise-expression ws "!=" ws bitwise-expression
+relational-expression =/ bitwise-expression ws "<"  ws bitwise-expression
+relational-expression =/ bitwise-expression ws "<=" ws bitwise-expression
+relational-expression =/ bitwise-expression ws ">"  ws bitwise-expression
+relational-expression =/ bitwise-expression ws ">=" ws bitwise-expression
+
+arithmetic-expression = bitwise-expression
+arithmetic-expression = bitwise-expression ws "+" ws bitwise-expression
+arithmetic-expression = bitwise-expression ws "-" ws bitwise-expression
+arithmetic-expression = bitwise-expression ws "*" ws bitwise-expression
+arithmetic-expression = bitwise-expression ws "/" ws bitwise-expression
+arithmetic-expression = bitwise-expression ws "%" ws bitwise-expression
+
+bitwise-expression = primary-expression
+bitwise-expression = primary-expression ws "|"  ws primary-expression
+bitwise-expression = primary-expression ws "&"  ws primary-expression
+bitwise-expression = primary-expression ws "^"  ws primary-expression
+bitwise-expression = primary-expression ws "<<" ws primary-expression
+bitwise-expression = primary-expression ws ">>" ws primary-expression
+
+primary-expression = "(" ws expression ws ")"
+primary-expression =/ number / bool / identifier
+primary-expression =/ ( "-" / "~" / "!" ) ws primary-expression
+
+
+; types
+
+type = "bool" / "int" / "real" / "string"
+
+
+; identifiers
+
+identifier = id-start *id-part
+
+id-start = %x41-5a              ; A-Z
+id-start =/ %x5f                ; _
+id-start =/ %x61-7a             ; a-z
+
+id-part = id-start
+id-part =/ %x30-39              ; 0-9
+
+
+; literals
+
+bool = %x74.72.75.65            ; true
+bool =/ %x66.61.6c.73.65        ; false
+
+number = zero / non-zero
+non-zero = %x31-39 *DIGIT       ; 1 - 9
+zero = %x30                     ; 0
+
+
+; keywords
+
+bool-keyword = %x62.6f.6f.6c                ; bool
+elif-keyword = %x65.6c.69.66                ; elif
+else-keyword = %x65.6c.73.65                ; else
+end-keyword = %x65.6e.64                    ; end
+for-keyword = %x66.6f.72                    ; for
+fun-keyword = %x66.75.6e                    ; fun
+if-keyword = %x69.66                        ; if
+int-keyword = %x69.6e.74                    ; int
+let-keyword = %x6c.65.74                    ; let
+real-keyword = %x72.65.61.6c                ; real
+return-keyword = %x72.65.74.75.72.6e        ; return
+string-keyword = %x73.74.72.69.6e.67        ; string
+while-keyword = %x77.68.69.6c.65            ; while
