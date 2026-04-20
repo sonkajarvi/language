@@ -31,16 +31,52 @@ static inline int read(struct parser *parser)
     return ret;
 }
 
+static inline bool is_newline(int ch)
+{
+    return ch == '\r' || ch == '\n';
+}
+
 /*
- * ws = *ws-char
- * ws-char = %x09                  ; \t
- * ws-char =/ %x20                 ; space
+ * eol = ws [ comment ]
+ *
+ * comment = comment-start *comment-char
+ * comment-start = %x23            ; #
+ * comment-char = %x09             ; \t
+ * comment-char =/ %x20-10ffff
  */
+void skip_eol(struct parser *parser)
+{
+    skip_whitespace(parser);
+
+    if (peek(parser) == '#') {
+        read(parser);
+
+        while (!is_newline(peek(parser)))
+            read(parser);
+    }
+}
+
+/*
+ * newline = [ %x0d ] %x0a         ; \r \n
+ */
+void skip_newline(struct parser *parser)
+{
+    if (peek(parser) == '\r')
+        read(parser);
+    if (peek(parser) == '\n')
+        read(parser);
+}
+
 static inline bool is_whitespace(int ch)
 {
     return ch == '\t' || ch == ' ';
 }
 
+/*
+ * ws = *ws-char
+ * ws-char = %x09                  ; \t
+ * ws-char =/ %x20                 ; space
+ */
 void skip_whitespace(struct parser *parser)
 {
     while (is_whitespace(peek(parser)))

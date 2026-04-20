@@ -55,6 +55,8 @@ static inline void parser_init_string(struct parser *parser, const char *src)
 struct token *peek_token(struct parser *parser);
 struct token *advance_token(struct parser *parser);
 
+void skip_eol(struct parser *parser);
+void skip_newline(struct parser *parser);
 void skip_whitespace(struct parser *parser);
 
 struct node *parse_expression(struct parser *parser);
