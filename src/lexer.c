@@ -31,12 +31,17 @@ static inline int read(struct parser *parser)
     return ret;
 }
 
+/*
+ * ws = *ws-char
+ * ws-char = %x09                  ; \t
+ * ws-char =/ %x20                 ; space
+ */
 static inline bool is_whitespace(int ch)
 {
-    return ch == '\t' || ch == '\v' || ch == '\f' || ch == ' ';
+    return ch == '\t' || ch == ' ';
 }
 
-static void skip_whitespace(struct parser *parser)
+void skip_whitespace(struct parser *parser)
 {
     while (is_whitespace(peek(parser)))
         read(parser);
