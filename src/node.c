@@ -152,19 +152,12 @@ void print_node(struct node *node)
     __print_node(node, 0);
 }
 
-static void *node_alloc(size_t n, int type)
+static inline void *node_alloc(size_t len, int type)
 {
-    struct node *node;
+    struct node *node = calloc(1, len);
 
-    if (type < NODE_FIRST || type > NODE_LAST)
-        return NULL;
-
-    node = malloc(n);
-    if (!node)
-        return NULL;
-
-    memset(node, 0, n);
-    node->type = type;
+    if (node)
+        node->type = type;
 
     return node;
 }
