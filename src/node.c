@@ -38,15 +38,15 @@ void free_node(struct node *node)
         break;
 
     case NODE_VARIABLE_STMT:
-        free_node(AS(struct variabe_stmt, node)->ident);
-        free_node(AS(struct variabe_stmt, node)->expr);
+        free(AS(struct variable_statement, node)->type);
+        free_node(AS(struct variable_statement, node)->value);
         break;
     }
 
     free(node);
 }
 
-const char *_type_to_string(int type)
+const char *type_to_string(int type)
 {
     switch (type) {
     case TOKEN_BOOL:    return "bool";
@@ -55,6 +55,29 @@ const char *_type_to_string(int type)
     case TOKEN_STRING:  return "string";
     default:            return "-";
     }
+}
+
+void __print_node(struct node *node, int indent);
+
+static void print_variable_statement(struct variable_statement *node, int indent)
+{
+    PRINT_INDENT(indent);
+    printf("VariableStatement:\n");
+
+    /* identifier */
+    PRINT_INDENT(indent + 1);
+    printf("Identifier: ");
+    fwrite(node->ident.begin, node->ident.end - node->ident.begin, 1, stdout);
+    putchar('\n');
+
+    /* type */
+    PRINT_INDENT(indent + 1);
+    printf("Type: %s\n", node->type ? type_to_string(node->type->type) : "-");
+
+    /* expression */
+    PRINT_INDENT(indent + 1);
+    printf("Expression:\n");
+    __print_node(node->value, indent + 2);
 }
 
 void __print_node(struct node *node, int indent)
@@ -119,20 +142,7 @@ void __print_node(struct node *node, int indent)
         break;
 
     case NODE_VARIABLE_STMT:
-        PRINT_INDENT(indent);
-        printf("VariableStatement:\n");
-
-        /* identifier */
-        __print_node(AS(struct variabe_stmt, node)->ident, indent + 1);
-
-        /* type */
-        PRINT_INDENT(indent + 1);
-        printf("Type: %s\n", _type_to_string(AS(struct variabe_stmt, node)->type));
-
-        /* expression */
-        PRINT_INDENT(indent + 1);
-        printf("Expression:\n");
-        __print_node(AS(struct variabe_stmt, node)->expr, indent + 2);
+        print_variable_statement((struct variable_statement *)node, indent);
         break;
     }
 }
@@ -212,16 +222,18 @@ struct node *new_unary_op(int op, struct node *expr)
     return &node->node;
 }
 
-struct node *new_variable_statement(struct node *ident, int type, struct node *expr)
+struct node *new_variable_statement(struct source_range *ident,
+                                struct type *type, struct node *value)
 {
-    struct variabe_stmt *node;
+    struct variable_statement *node;
 
     node = node_alloc(sizeof(*node), NODE_VARIABLE_STMT);
-    if (node) {
-        node->ident = ident;
-        node->type = type;
-        node->expr = expr;
-    }
+    if (!node)
+        return NULL;
+
+    memcpy(&node->ident, ident, sizeof(*ident));
+    node->type = type;
+    node->value = value;
 
     return &node->node;
 }

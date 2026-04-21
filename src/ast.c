@@ -171,90 +171,102 @@ out:
 /*
  * type = "bool" / "int" / "real" / "string"
  */
-static int _parse_type(struct parser *parser)
+static struct type *parse_type(struct parser *parser)
 {
-    struct token *token;
+    struct token *tok;
+    struct type *type;
 
-    token = peek_token(parser);
-    if (!token)
-        goto out;
+    tok = peek_token(parser);
+    if (!tok)
+        return NULL;
 
-    switch (token->type) {
-    /*
-     * Just return the type for now.
-     */
+    switch (tok->type) {
     case TOKEN_BOOL:
     case TOKEN_INT:
     case TOKEN_REAL:
     case TOKEN_STRING:
-        token = advance_token(parser);
-        return token->type;
-    }
+        tok = advance_token(parser);
 
-out:
-    return -1;
+        type = malloc(sizeof(*type));
+        if (!type) {
+            parser->errno = OUT_OF_MEMORY;
+            return NULL;
+        }
+
+        type->type = tok->type;
+        return type;
+
+    default:
+        return NULL;
+    }
 }
 
 /*
- * variable-statement = "let" identifier type
- * variable-statement =/ "let" identifier [ type ] "=" expression
+ * variable-statement = let-keyword ws identifier ws type
+ * variable-statement =/ let-keyword ws identifier ws [ type ws ] "=" ws expression
  */
 struct node *parse_variable_statement(struct parser *parser)
 {
-    struct node *ident, *expr = NULL;
-    struct token *token;
-    int type;
+    struct token *tok;
+    struct source_range ident;
+    struct type *type;
+    struct node *value = NULL;
 
     /*
-     * let
+     * Skip the "let" token unconditionally; this function is only called if
+     * the peeked token was "let", thus we can safely discard it here.
      */
-    token = peek_token(parser);
-    if (!token || token->type != TOKEN_LET) {
-        parser->errno = EXPECTED_LET;
-        return NULL;
-    }
     advance_token(parser);
+    skip_whitespace(parser);
 
-    /*
-     * identifier
-     */
-    token = peek_token(parser);
-    if (!token || token->type != TOKEN_IDENTIFIER) {
+    /* identifier */
+    tok = peek_token(parser);
+    if (tok->type != TOKEN_IDENTIFIER) {
         parser->errno = EXPECTED_IDENTIFIER;
         return NULL;
     }
 
-    ident = new_identifier(token->begin, token->end);
-    if (!ident) {
-        parser->errno = OUT_OF_MEMORY;
-        return NULL;
-    }
+    ident.begin = tok->begin;
+    ident.end = tok->end;
+
     advance_token(parser);
+    skip_whitespace(parser);
 
-    /*
-    * type
-    * [ type ] =
-    */
-    type = _parse_type(parser);
-    token = peek_token(parser);
-    if (!token)
+    /* type */
+    type = parse_type(parser);
+    if (!type && parser->errno != 0)
         return NULL;
-    if (type != -1 && token->type != TOKEN_ASSIGN)
-        goto out;
 
-    token = advance_token(parser);
-    if (token->type != TOKEN_ASSIGN) {
-        parser->errno = EXPECTED_EQUALS;
-        return NULL;
+    skip_whitespace(parser);
+
+    tok = peek_token(parser);
+    if (tok->type != TOKEN_ASSIGN) {
+        if (!type) {
+            /*
+             * We didn't get a type or an assignment token; we cannot continue
+             * from here anymore.
+             */
+            free(type);
+            parser->errno = EXPECTED_ASSIGN;
+            return NULL;
+        } else {
+            /*
+             * We got a type but not an assignment token; jump to the end.
+             */
+            goto out;
+        }
     }
 
-    /*
-     * expression
-     */
-    expr = parse_expression(parser);
-    if (!expr)
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* value */
+    value = parse_expression(parser);
+    if (!value) {
+        free(type);
         return NULL;
+    }
 
 out:
-    return new_variable_statement(ident, type, expr);
+    return new_variable_statement(&ident, type, value);
 }

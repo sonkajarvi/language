@@ -267,11 +267,9 @@ struct token *peek_token(struct parser *parser)
     if (parser->has_peeked)
         goto out;
 
-    skip_whitespace(parser);
-
     switch (peek(parser)) {
     default:
-        token = NULL;
+        parser->peek.type = TOKEN_NONE;
         break;
 
     case -1:

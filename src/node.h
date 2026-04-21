@@ -47,11 +47,20 @@ struct unary_op {
     struct node *expr;
 };
 
-struct variabe_stmt {
-    struct node node;
-    struct node *ident;
+struct source_range {
+    const char *begin, *end;
+};
+
+struct type {
     int type;
-    struct node *expr;
+};
+
+struct variable_statement {
+    struct node node;
+
+    struct source_range ident;
+    struct type *type;
+    struct node *value;
 };
 
 void free_node(struct node *node);
@@ -61,6 +70,8 @@ struct node *new_identifier(const char *begin, const char *end);
 struct node *new_number(const char *begin, const char *end);
 struct node *new_binary_op(int op, struct node *left, struct node *right);
 struct node *new_unary_op(int op, struct node *expr);
-struct node *new_variable_statement(struct node *ident, int type, struct node *expr);
+
+struct node *new_variable_statement(struct source_range *ident,
+                                struct type *type, struct node *value);
 
 #endif /* __SRC_NODE_H */
