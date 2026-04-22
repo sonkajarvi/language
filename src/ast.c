@@ -210,7 +210,7 @@ struct node *parse_variable_statement(struct parser *parser)
     struct token *tok;
     struct source_range ident;
     struct type *type;
-    struct node *value = NULL;
+    struct node *node, *value = NULL;
 
     /*
      * Skip the "let" token unconditionally; this function is only called if
@@ -267,5 +267,13 @@ struct node *parse_variable_statement(struct parser *parser)
     }
 
 out:
-    return new_variable_statement(&ident, type, value);
+    node = new_variable_statement(&ident, type, value);
+    if (node)
+        return node;
+
+    free(type);
+    free_node(value);
+
+    parser->errno = OUT_OF_MEMORY;
+    return NULL;
 }
