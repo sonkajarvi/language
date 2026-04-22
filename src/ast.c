@@ -246,7 +246,6 @@ struct node *parse_variable_statement(struct parser *parser)
              * We didn't get a type or an assignment token; we cannot continue
              * from here anymore.
              */
-            free(type);
             parser->errno = EXPECTED_ASSIGN;
             return NULL;
         } else {
