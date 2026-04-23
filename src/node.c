@@ -59,6 +59,41 @@ const char *type_to_string(int type)
 
 void __print_node(struct node *node, int indent);
 
+static void print_binary_op(struct binary_op *node, int indent)
+{
+    PRINT_INDENT(indent);
+    printf("BinaryOp:\n");
+
+    /* operator */
+    PRINT_INDENT(indent + 1);
+    printf("Op: %s\n", op_to_string(node->op));
+
+    /* left-hand side */
+    PRINT_INDENT(indent + 1);
+    printf("Left:\n");
+    __print_node(node->expr, indent + 2);
+
+    /* right-hand side */
+    PRINT_INDENT(indent + 1);
+    printf("Right:\n");
+    __print_node(node->expr->next, indent + 2);
+}
+
+static void print_unary_op(struct unary_op *node, int indent)
+{
+    PRINT_INDENT(indent);
+    printf("UnaryOp:\n");
+
+    /* operator */
+    PRINT_INDENT(indent + 1);
+    printf("Op: %s\n", op_to_string(node->op));
+
+    /* expression */
+    PRINT_INDENT(indent + 1);
+    printf("Expression:\n");
+    __print_node(node->expr, indent + 2);
+}
+
 static void print_variable_statement(struct variable_statement *node, int indent)
 {
     PRINT_INDENT(indent);
@@ -114,31 +149,11 @@ void __print_node(struct node *node, int indent)
         break;
 
     case NODE_BINARY_OP:
-        PRINT_INDENT(indent);
-        printf("BinaryOp:\n");
-
-        PRINT_INDENT(indent + 1);
-        printf("Op: %s\n", op_to_string(AS(struct binary_op, node)->op));
-
-        PRINT_INDENT(indent + 1);
-        printf("Left:\n");
-        __print_node(AS(struct binary_op, node)->expr, indent + 2);
-
-        PRINT_INDENT(indent + 1);
-        printf("Right:\n");
-        __print_node(AS(struct binary_op, node)->expr->next, indent + 2);
+        print_binary_op((struct binary_op *)node, indent);
         break;
 
     case NODE_UNARY_OP:
-        PRINT_INDENT(indent);
-        printf("UnaryOp:\n");
-
-        PRINT_INDENT(indent + 1);
-        printf("Op: %s\n", op_to_string(AS(struct unary_op, node)->op));
-
-        PRINT_INDENT(indent + 1);
-        printf("Expression:\n");
-        __print_node(AS(struct unary_op, node)->expr, indent + 2);
+        print_unary_op((struct unary_op *)node, indent);
         break;
 
     case NODE_VARIABLE_STMT:
@@ -193,11 +208,12 @@ struct node *new_binary_op(int op, struct node *left, struct node *right)
     struct binary_op *node;
 
     node = node_alloc(sizeof(*node), NODE_BINARY_OP);
-    if (node) {
-        node->op = op;
-        node->expr = left;
-        node->expr->next = right;
-    }
+    if (!node)
+        return NULL;
+
+    node->op = op;
+    node->expr = left;
+    node->expr->next = right;
 
     return &node->node;
 }
@@ -207,10 +223,11 @@ struct node *new_unary_op(int op, struct node *expr)
     struct unary_op *node;
 
     node = node_alloc(sizeof(*node), NODE_UNARY_OP);
-    if (node) {
-        node->op = op;
-        node->expr = expr;
-    }
+    if (!node)
+        return NULL;
+
+    node->op = op;
+    node->expr = expr;
 
     return &node->node;
 }
