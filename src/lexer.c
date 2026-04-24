@@ -154,6 +154,12 @@ void init_keywords(void)
 static int keyword_to_token(const char *keyword, size_t len)
 {
     for (int i = 0; i < KEYWORD_COUNT; i++) {
+        /*
+         * Make sure that the identifier we read has the same length as the
+         * keyword we're comparing it against.
+         */
+        if (__keywords[i].keyword[len])
+            continue;
         if (strncmp(keyword, __keywords[i].keyword, len) == 0)
             return __keywords[i].token;
     }
