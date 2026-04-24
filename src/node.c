@@ -29,7 +29,6 @@ void free_node(struct node *node)
 
     switch (node->type) {
     case NODE_BINARY_OP:
-        free_node(AS(struct binary_op, node)->expr->next);
         free_node(AS(struct binary_op, node)->expr);
         break;
 
@@ -43,6 +42,7 @@ void free_node(struct node *node)
         break;
     }
 
+    free_node(node->next);
     free(node);
 }
 
