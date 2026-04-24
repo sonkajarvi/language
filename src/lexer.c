@@ -31,28 +31,68 @@ static inline int read(struct parser *parser)
     return ret;
 }
 
-static inline bool is_newline(int ch)
+/*
+ * newline = [ %x0d ] %x0a         ; \r \n
+ */
+bool is_newline_sequence(struct parser *parser)
+{
+    bool ret;
+
+    if (peek(parser) == '\r') {
+        read(parser);
+        /* TODO: This is a hack, make it not one. */
+        ret = peek(parser) == '\n';
+        parser->ptr--;
+    } else {
+        ret = peek(parser) == '\n';
+    }
+
+    return ret;
+}
+
+static inline bool is_newline_char(int ch)
 {
     return ch == '\r' || ch == '\n';
 }
 
+inline bool is_comment_start(struct parser *parser)
+{
+    return peek(parser) == '#';
+}
+
+static inline bool is_whitespace_char(int ch)
+{
+    return ch == '\t' || ch == ' ';
+}
+
 /*
  * eol = ws [ comment ]
- *
+ */
+void skip_eol(struct parser *parser)
+{
+    skip_whitespace(parser);
+    skip_comment(parser);
+}
+
+/*
  * comment = comment-start *comment-char
  * comment-start = %x23            ; #
  * comment-char = %x09             ; \t
  * comment-char =/ %x20-10ffff
  */
-void skip_eol(struct parser *parser)
+void skip_comment(struct parser *parser)
 {
-    skip_whitespace(parser);
-
-    if (peek(parser) == '#') {
+    if (is_comment_start(parser)) {
         read(parser);
 
-        while (!is_newline(peek(parser)))
+        /*
+         * TODO: There are a handful of other characters that we aren't
+         *       checking for, but we should.
+         */
+        while (!is_newline_char(peek(parser)))
             read(parser);
+
+        parser->has_peeked = false;
     }
 }
 
@@ -63,13 +103,10 @@ void skip_newline(struct parser *parser)
 {
     if (peek(parser) == '\r')
         read(parser);
-    if (peek(parser) == '\n')
+    if (peek(parser) == '\n') {
         read(parser);
-}
-
-static inline bool is_whitespace(int ch)
-{
-    return ch == '\t' || ch == ' ';
+        parser->has_peeked = false;
+    }
 }
 
 /*
@@ -79,7 +116,7 @@ static inline bool is_whitespace(int ch)
  */
 void skip_whitespace(struct parser *parser)
 {
-    while (is_whitespace(peek(parser)))
+    while (is_whitespace_char(peek(parser)))
         read(parser);
 }
 
