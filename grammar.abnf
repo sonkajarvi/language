@@ -9,7 +9,7 @@ ws = *ws-char
 ws-char = %x09                  ; \t
 ws-char =/ %x20                 ; space
 
-newline = [ %x0d ] %x0a
+newline = [ %x0d ] %x0a         ; \r \n
 
 eol = ws [ comment ]
 
