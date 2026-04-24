@@ -13,14 +13,14 @@
 #include "op.h"
 #include "token.h"
 
-#define INDENT_STR "  "
+#define INDENT_STRING   "  "
+#define EMPTY_STRING    "--"
+
 #define PRINT_INDENT(indent)                                                    \
     do {                                                                        \
         for (int __i = 0; __i < indent; __i++)                                  \
-            printf("%s", INDENT_STR);                                           \
+            printf("%s", INDENT_STRING);                                        \
     } while (0)
-
-#define AS(T, x) ((T *)x)
 
 void free_node(struct node *node)
 {
@@ -29,16 +29,16 @@ void free_node(struct node *node)
 
     switch (node->type) {
     case NODE_BINARY_OP:
-        free_node(AS(struct binary_op, node)->expr);
+        free_node(((struct binary_op *)node)->expr);
         break;
 
     case NODE_UNARY_OP:
-        free_node(AS(struct unary_op, node)->expr);
+        free_node(((struct unary_op *)node)->expr);
         break;
 
     case NODE_VARIABLE_STMT:
-        free(AS(struct variable_statement, node)->type);
-        free_node(AS(struct variable_statement, node)->value);
+        free(((struct variable_statement *)node)->type);
+        free_node(((struct variable_statement *)node)->value);
         break;
     }
 
@@ -53,11 +53,31 @@ const char *type_to_string(int type)
     case TOKEN_INT:     return "int";
     case TOKEN_REAL:    return "real";
     case TOKEN_STRING:  return "string";
-    default:            return "-";
+    default:            return EMPTY_STRING;
     }
 }
 
-void __print_node(struct node *node, int indent);
+void _print_node(struct node *node, int indent);
+
+static void print_identifier(struct identifier *node, int indent)
+{
+    PRINT_INDENT(indent);
+    printf("Identifier: ");
+
+    /* identifier */
+    fwrite(node->begin, node->end - node->begin, 1, stdout);
+    putchar('\n');
+}
+
+static void print_number(struct number *node, int indent)
+{
+    PRINT_INDENT(indent);
+    printf("Number: ");
+
+    /* number */
+    fwrite(node->begin, node->end - node->begin, 1, stdout);
+    putchar('\n');
+}
 
 static void print_binary_op(struct binary_op *node, int indent)
 {
@@ -71,12 +91,12 @@ static void print_binary_op(struct binary_op *node, int indent)
     /* left-hand side */
     PRINT_INDENT(indent + 1);
     printf("Left:\n");
-    __print_node(node->expr, indent + 2);
+    _print_node(node->expr, indent + 2);
 
     /* right-hand side */
     PRINT_INDENT(indent + 1);
     printf("Right:\n");
-    __print_node(node->expr->next, indent + 2);
+    _print_node(node->expr->next, indent + 2);
 }
 
 static void print_unary_op(struct unary_op *node, int indent)
@@ -91,7 +111,7 @@ static void print_unary_op(struct unary_op *node, int indent)
     /* expression */
     PRINT_INDENT(indent + 1);
     printf("Expression:\n");
-    __print_node(node->expr, indent + 2);
+    _print_node(node->expr, indent + 2);
 }
 
 static void print_variable_statement(struct variable_statement *node, int indent)
@@ -107,45 +127,29 @@ static void print_variable_statement(struct variable_statement *node, int indent
 
     /* type */
     PRINT_INDENT(indent + 1);
-    printf("Type: %s\n", node->type ? type_to_string(node->type->type) : "-");
+    printf("Type: %s\n", node->type ? type_to_string(node->type->type) : EMPTY_STRING);
 
     /* expression */
     PRINT_INDENT(indent + 1);
     printf("Expression:\n");
-    __print_node(node->value, indent + 2);
+    _print_node(node->value, indent + 2);
 }
 
-void __print_node(struct node *node, int indent)
+void _print_node(struct node *node, int indent)
 {
-    const char *begin, *end;
-
     if (!node) {
         PRINT_INDENT(indent);
-        printf("-\n");
+        printf("%s\n", EMPTY_STRING);
         return;
     }
 
     switch (node->type) {
     case NODE_IDENTIFIER:
-        PRINT_INDENT(indent);
-        printf("Identifier: ");
-
-        begin = AS(struct identifier, node)->begin;
-        end = AS(struct identifier, node)->end;
-        fwrite(begin, end - begin, 1, stdout);
-
-        putchar('\n');
+        print_identifier((struct identifier *)node, indent);
         break;
 
     case NODE_NUMBER:
-        PRINT_INDENT(indent);
-        printf("Number: ");
-
-        begin = AS(struct number, node)->begin;
-        end = AS(struct number, node)->end;
-        fwrite(begin, end - begin, 1, stdout);
-
-        putchar('\n');
+        print_number((struct number *)node, indent);
         break;
 
     case NODE_BINARY_OP:
@@ -164,7 +168,7 @@ void __print_node(struct node *node, int indent)
 
 void print_node(struct node *node)
 {
-    __print_node(node, 0);
+    _print_node(node, 0);
 }
 
 static inline void *node_alloc(size_t len, int type)
