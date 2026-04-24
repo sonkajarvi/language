@@ -38,7 +38,7 @@ function-statement = fun-keyword ws identifier ws args ws type eol newline state
 args = "(" ws arg *( ws "," ws arg ) ws ")"
 arg = identifier ws type
 
-if-statement = if-part [ elif-part ] [ else-part ] ws end-keyword
+if-statement = if-part *( elif-part ) [ else-part ] ws end-keyword
 if-part = if-keyword ws expression eol newline statements
 elif-part = elif-keyword ws expression eol newline statements
 else-part = else-keyword eol newline statements
