@@ -21,6 +21,7 @@ enum {
     EXPECTED_LET,
     EXPECTED_IDENTIFIER,
     EXPECTED_ASSIGN,
+    EXPECTED_NEWLINE,
 
     OUT_OF_MEMORY,
 };
@@ -65,5 +66,7 @@ void skip_whitespace(struct parser *parser);
 
 struct node *parse_expression(struct parser *parser);
 struct node *parse_variable_statement(struct parser *parser);
+
+struct node *parse_statements(struct parser *parser);
 
 #endif /* __SRC_AST_H */

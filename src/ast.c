@@ -303,3 +303,72 @@ out:
     parser->errno = OUT_OF_MEMORY;
     return NULL;
 }
+
+/*
+ * statements-part = ws ( [ comment ] / ( statement eol ) )
+ *
+ * statement = for-statement
+ * statement =/ function-statement
+ * statement =/ if-statement
+ * statement =/ return-statement
+ * statement =/ variable-statement
+ * statement =/ while-statement
+ */
+static struct node *parse_statements_part(struct parser *parser)
+{
+    struct node *stmt;
+    struct token *tok;
+
+    skip_whitespace(parser);
+
+    if (is_comment_start(parser))
+        skip_comment(parser);
+
+    tok = peek_token(parser);
+
+    switch (tok->type) {
+    case TOKEN_LET:
+        stmt = parse_variable_statement(parser);
+        break;
+
+    default:
+        parser->errno = 0;
+        return NULL;
+    }
+
+    return stmt;
+}
+
+/*
+ * statements = statements-part *( newline statements-part )
+ */
+struct node *parse_statements(struct parser *parser)
+{
+    struct node *stmts, **tmp;
+
+    stmts = parse_statements_part(parser);
+
+    if (stmts) {
+        tmp = &stmts->next;
+
+        for (;;) {
+            if (!is_newline_sequence(parser)) {
+                parser->errno = EXPECTED_NEWLINE;
+                free_node(stmts);
+                return NULL;
+            }
+            skip_newline(parser);
+
+            *tmp = parse_statements_part(parser);
+            if (!*tmp)
+                break;
+
+            tmp = &((*tmp)->next);
+        }
+    }
+
+    if (parser->errno != 0)
+        return NULL;
+
+    return stmts;
+}
