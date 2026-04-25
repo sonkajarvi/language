@@ -331,6 +331,10 @@ static struct node *parse_statements_part(struct parser *parser)
         stmt = parse_variable_statement(parser);
         break;
 
+    case TOKEN_IF:
+        stmt = parse_if_statement(parser);
+        break;
+
     default:
         parser->errno = 0;
         return NULL;
@@ -371,4 +375,220 @@ struct node *parse_statements(struct parser *parser)
         return NULL;
 
     return stmts;
+}
+
+/*
+ * if-part = if-keyword ws expression eol newline statements
+ */
+static struct if_part *parse_if_part(struct parser *parser)
+{
+    struct if_part *part;
+    struct node *test, *stmts = NULL;
+
+    /* if */
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* expression */
+    test = parse_expression(parser);
+    if (!test)
+        return NULL;
+
+    skip_eol(parser);
+
+    /* newline */
+    if (!is_newline_sequence(parser)) {
+        parser->errno = EXPECTED_NEWLINE;
+        goto err;
+    }
+    skip_newline(parser);
+
+    /* statements */
+    stmts = parse_statements(parser);
+    if (!stmts && parser->errno != 0)
+        goto err;
+
+    part = calloc(1, sizeof(*part));
+    if (!part) {
+        parser->errno = OUT_OF_MEMORY;
+        goto err;
+    }
+    part->test = test;
+    part->stmts = stmts;
+    return part;
+
+err:
+    free_node(test);
+    free_node(stmts);
+    return NULL;
+}
+
+/*
+ * elif-part = elif-keyword ws expression eol newline statements
+ */
+static struct elif_part *parse_elif_part(struct parser *parser)
+{
+    struct elif_part *part;
+    struct node *test, *stmts = NULL;
+
+    /* elif */
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* expression */
+    test = parse_expression(parser);
+    if (!test)
+        return NULL;
+
+    skip_eol(parser);
+
+    /* newline */
+    if (!is_newline_sequence(parser)) {
+        parser->errno = EXPECTED_NEWLINE;
+        goto err;
+    }
+    skip_newline(parser);
+
+    /* statements */
+    stmts = parse_statements(parser);
+    if (!stmts && parser->errno != 0)
+        goto err;
+
+    part = calloc(1, sizeof(*part));
+    if (!part) {
+        parser->errno = OUT_OF_MEMORY;
+        goto err;
+    }
+    part->test = test;
+    part->stmts = stmts;
+    return part;
+
+err:
+    free_node(test);
+    free_node(stmts);
+    return NULL;
+}
+
+static struct elif_part *parse_elif_parts(struct parser *parser)
+{
+    struct elif_part *parts, **tmp;
+
+    /* elif */
+    parts = parse_elif_part(parser);
+
+    if (parts) {
+        tmp = &parts->next;
+
+        for (;;) {
+            if (peek_token(parser)->type != TOKEN_ELIF)
+                break;
+
+            *tmp = parse_elif_part(parser);
+            if (!*tmp)
+                break;
+            tmp = &((*tmp)->next);
+        }
+    }
+
+    if (parser->errno != 0)
+        return NULL;
+
+    return parts;
+}
+
+/*
+ * else-part = else-keyword eol newline statements
+ */
+static struct else_part *parse_else_part(struct parser *parser)
+{
+    struct else_part *part;
+    struct node *stmts;
+
+    /* else */
+    advance_token(parser);
+    skip_whitespace(parser);
+    skip_eol(parser);
+
+    /* newline */
+    if (!is_newline_sequence(parser)) {
+        parser->errno = EXPECTED_NEWLINE;
+        return NULL;
+    }
+    skip_newline(parser);
+
+    /* statements */
+    stmts = parse_statements(parser);
+    if (!stmts && parser->errno != 0)
+        return NULL;
+
+    part = calloc(1, sizeof(*part));
+    if (!part) {
+        free_node(stmts);
+        parser->errno = OUT_OF_MEMORY;
+        return NULL;
+    }
+
+    part->stmts = stmts;
+    return part;
+}
+
+/*
+ * if-statement = if-part *( elif-part ) [ else-part ] ws end-keyword
+ * if-part = if-keyword ws expression eol newline statements
+ * elif-part = elif-keyword ws expression eol newline statements
+ * else-part = else-keyword eol newline statements
+ */
+struct node *parse_if_statement(struct parser *parser)
+{
+    struct if_part *if_part;
+    struct elif_part *elif_parts = NULL;
+    struct else_part *else_part = NULL;
+    struct node *ret;
+    struct token *tok;
+
+    /* if part */
+    tok = peek_token(parser);
+    if (tok->type != TOKEN_IF) {
+        parser->errno = EXPECTED_IF;
+        return NULL;
+    }
+    if_part = parse_if_part(parser);
+    if (!if_part)
+        return NULL;
+
+    /* elif parts */
+    if (peek_token(parser)->type == TOKEN_ELIF) {
+        elif_parts = parse_elif_parts(parser);
+        if (!elif_parts && parser->errno != 0)
+            goto err;
+    }
+
+    /* else part */
+    if (peek_token(parser)->type == TOKEN_ELSE) {
+        else_part = parse_else_part(parser);
+        if (!else_part && parser->errno != 0)
+            goto err;
+    }
+
+    skip_whitespace(parser);
+
+    /* end */
+    tok = peek_token(parser);
+    if (tok->type != TOKEN_END) {
+        parser->errno = EXPECTED_END;
+        return NULL;
+    }
+    advance_token(parser);
+
+    ret = new_if_statement(if_part, elif_parts, else_part);
+    if (ret)
+        return ret;
+
+    parser->errno = OUT_OF_MEMORY;
+
+err:
+    free_if_part(if_part);
+    free_elif_parts(elif_parts);
+    free_else_part(else_part);
+    return NULL;
 }
