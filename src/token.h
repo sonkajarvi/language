@@ -28,6 +28,7 @@
     x(BITWISE_XOR)              /* ^ */                                         \
     x(BOOL)                     /* bool */                                      \
     x(DIVIDE)                   /* / */                                         \
+    x(ELIF)                     /* elif */                                      \
     x(ELSE)                     /* else */                                      \
     x(END)                      /* end */                                       \
     x(EQUALS)                   /* == */                                        \

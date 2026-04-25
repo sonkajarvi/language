@@ -183,6 +183,7 @@ void init_keywords(void)
     i++;
 
     X("bool", TOKEN_BOOL);
+    X("elif", TOKEN_ELIF);
     X("else", TOKEN_ELSE);
     X("end", TOKEN_END);
     X("for", TOKEN_FOR);
