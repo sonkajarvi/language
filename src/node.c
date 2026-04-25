@@ -24,6 +24,42 @@ static inline void _indent(int indent)
 
 void _print_node(struct node *node, int indent);
 
+void free_if_part(struct if_part *part)
+{
+    if (!part)
+        return;
+
+    free_node(part->test);
+    free_node(part->stmts);
+    free(part);
+}
+
+void free_elif_parts(struct elif_part *parts)
+{
+    struct elif_part *tmp, *tmp2;
+
+    if (!parts)
+        return;
+
+    for (tmp = parts; tmp;) {
+        tmp2 = tmp;
+        tmp = tmp->next;
+
+        free_node(tmp2->test);
+        free_node(tmp2->stmts);
+        free(tmp2);
+    }
+}
+
+void free_else_part(struct else_part *part)
+{
+    if (!part)
+        return;
+
+    free_node(part->stmts);
+    free(part);
+}
+
 void free_node(struct node *node)
 {
     if (!node)
@@ -38,9 +74,15 @@ void free_node(struct node *node)
         free_node(((struct unary_op *)node)->expr);
         break;
 
-    case NODE_VARIABLE_STMT:
+    case NODE_VARIABLE_STATEMENT:
         free(((struct variable_statement *)node)->type);
         free_node(((struct variable_statement *)node)->value);
+        break;
+
+    case NODE_IF_STATEMENT:
+        free_if_part(((struct if_statement *)node)->if_part);
+        free_elif_parts(((struct if_statement *)node)->elif_parts);
+        free_else_part(((struct if_statement *)node)->else_part);
         break;
     }
 
@@ -135,6 +177,50 @@ static void print_variable_statement(struct variable_statement *node, int indent
     _print_node(node->value, indent + 2);
 }
 
+static void print_if_statement(struct if_statement *node, int indent)
+{
+    struct node *tmp;
+
+    _indent(indent);
+    printf("IfStatement:\n");
+
+    /* if part */
+    _indent(indent + 1);
+    printf("If:\n");
+
+    _indent(indent + 2);
+    printf("Test:\n");
+    _print_node(node->if_part->test, indent + 3);
+
+    _indent(indent + 2);
+    printf("Statements:\n");
+    for (tmp = node->if_part->stmts; tmp; tmp = tmp->next)
+        _print_node(tmp, indent + 3);
+
+    /* elif parts */
+    if (node->elif_parts) {
+        for (tmp = node->elif_parts->stmts; tmp; tmp = tmp->next) {
+            _indent(indent + 1);
+            printf("Elif:\n");
+
+            _indent(indent + 2);
+            printf("Statements:\n");
+            _print_node(tmp, indent + 3);
+        }
+    }
+
+    /* else part */
+    if (node->else_part) {
+        _indent(indent + 1);
+        printf("Else:\n");
+
+        _indent(indent + 2);
+        printf("Statements:\n");
+        for (tmp = node->else_part->stmts; tmp; tmp = tmp->next)
+            _print_node(tmp, indent + 3);
+    }
+}
+
 void _print_node(struct node *node, int indent)
 {
     if (!node) {
@@ -160,8 +246,12 @@ void _print_node(struct node *node, int indent)
         print_unary_op((struct unary_op *)node, indent);
         break;
 
-    case NODE_VARIABLE_STMT:
+    case NODE_VARIABLE_STATEMENT:
         print_variable_statement((struct variable_statement *)node, indent);
+        break;
+
+    case NODE_IF_STATEMENT:
+        print_if_statement((struct if_statement *)node, indent);
         break;
     }
 }
@@ -241,13 +331,29 @@ struct node *new_variable_statement(struct source_range *ident,
 {
     struct variable_statement *node;
 
-    node = node_alloc(sizeof(*node), NODE_VARIABLE_STMT);
+    node = node_alloc(sizeof(*node), NODE_VARIABLE_STATEMENT);
     if (!node)
         return NULL;
 
     memcpy(&node->ident, ident, sizeof(*ident));
     node->type = type;
     node->value = value;
+
+    return &node->node;
+}
+
+struct node *new_if_statement(struct if_part *if_part,
+                    struct elif_part *elif_parts, struct else_part *else_part)
+{
+    struct if_statement *node;
+
+    node = node_alloc(sizeof(*node), NODE_IF_STATEMENT);
+    if (!node)
+        return NULL;
+
+    node->if_part = if_part;
+    node->elif_parts = elif_parts;
+    node->else_part = else_part;
 
     return &node->node;
 }

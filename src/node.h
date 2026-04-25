@@ -13,7 +13,8 @@ enum {
     NODE_NUMBER,
     NODE_BINARY_OP,
     NODE_UNARY_OP,
-    NODE_VARIABLE_STMT,
+    NODE_VARIABLE_STATEMENT,
+    NODE_IF_STATEMENT,
 
     NODE_COUNT,
     NODE_FIRST = 0,
@@ -63,7 +64,31 @@ struct variable_statement {
     struct node *value;
 };
 
+struct if_part {
+    struct node        *test, *stmts;
+};
+
+struct elif_part {
+    struct elif_part   *next;
+    struct node        *test, *stmts;
+};
+
+struct else_part {
+    struct node        *stmts;
+};
+
+struct if_statement {
+    struct node         node;
+    struct if_part     *if_part;
+    struct elif_part   *elif_parts;
+    struct else_part   *else_part;
+};
+
 void free_node(struct node *node);
+void free_if_part(struct if_part *part);
+void free_elif_parts(struct elif_part *parts);
+void free_else_part(struct else_part *part);
+
 void print_node(struct node *node);
 
 struct node *new_identifier(const char *begin, const char *end);
@@ -73,5 +98,8 @@ struct node *new_unary_op(int op, struct node *expr);
 
 struct node *new_variable_statement(struct source_range *ident,
                                 struct type *type, struct node *value);
+
+struct node *new_if_statement(struct if_part *if_part,
+                    struct elif_part *elif_parts, struct else_part *else_part);
 
 #endif /* __SRC_NODE_H */
