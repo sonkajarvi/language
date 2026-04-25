@@ -33,6 +33,7 @@ struct parser {
     bool has_peeked;
 
     int errno;
+    int line, column;
 };
 
 void init_keywords(void);
@@ -44,6 +45,7 @@ static inline void parser_init(struct parser *parser, const char *src, size_t le
     memset(parser, 0, sizeof(*parser));
     parser->ptr = src;
     parser->end = parser->ptr + len;
+    parser->line = parser->column = 1;
 
     init_keywords();
 }

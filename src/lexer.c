@@ -26,8 +26,17 @@ static inline int read(struct parser *parser)
     int ret;
 
     ret = peek(parser);
-    if (ret != -1)
+    if (ret != -1) {
         parser->ptr++;
+
+        if (ret == '\n') {
+            parser->line++;
+            parser->column = 1;
+        } else {
+            parser->column++;
+        }
+    }
+
     return ret;
 }
 
