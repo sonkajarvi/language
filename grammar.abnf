@@ -22,7 +22,7 @@ comment-char =/ %x20-10ffff
 ; statements
 
 statements = statements-part *( newline statements-part )
-statements-part = ws ( [ comment ] / ( statement eol ) )
+statements-part = [ ws statement ] eol
 
 statement = for-statement
 statement =/ function-statement
