@@ -9,29 +9,29 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "ast.h"
+#include "parser.h"
 #include "token.h"
 
 /* TODO: At the moment ASCII only; expand to UTF-8. */
-static inline int peek(struct parser *parser)
+int peek_offset(struct parser *parser, size_t offset)
 {
-    if (parser->ptr >= parser->end)
+    if (parser->pointer + offset >= parser->end)
         return -1;
-    return *parser->ptr;
+    return parser->pointer[offset];
 }
 
 /* TODO: At the moment ASCII only; expand to UTF-8. */
-static inline int read(struct parser *parser)
+int advance(struct parser *parser)
 {
     int ret;
 
     ret = peek(parser);
     if (ret != -1) {
-        parser->ptr++;
+        parser->pointer++;
 
         if (ret == '\n') {
             parser->line++;
-            parser->column = 1;
+            parser->column = PARSER_LINE_COLUMN_DEFAULT;
         } else {
             parser->column++;
         }
@@ -41,37 +41,59 @@ static inline int read(struct parser *parser)
 }
 
 /*
+ * comment-start = %x23            ; #
+ */
+bool is_comment_start(struct parser *parser)
+{
+    return peek(parser) == '#';
+}
+
+/*
  * newline = [ %x0d ] %x0a         ; \r \n
  */
 bool is_newline_sequence(struct parser *parser)
 {
-    bool ret;
-
-    if (peek(parser) == '\r') {
-        read(parser);
-        /* TODO: This is a hack, make it not one. */
-        ret = peek(parser) == '\n';
-        parser->ptr--;
-    } else {
-        ret = peek(parser) == '\n';
-    }
-
-    return ret;
+    return peek(parser) == '\n'
+        || (peek(parser) == '\r' && peek_offset(parser, 1) == '\n');
 }
 
+/*
+ * newline = [ %x0d ] %x0a         ; \r \n
+ */
 static inline bool is_newline_char(int ch)
 {
     return ch == '\r' || ch == '\n';
 }
 
-inline bool is_comment_start(struct parser *parser)
-{
-    return peek(parser) == '#';
-}
-
+/*
+ * ws-char = %x09                  ; \t
+ * ws-char =/ %x20                 ; space
+ */
 static inline bool is_whitespace_char(int ch)
 {
     return ch == '\t' || ch == ' ';
+}
+
+/*
+ * comment = comment-start *comment-char
+ * comment-start = %x23            ; #
+ * comment-char = %x09             ; \t
+ * comment-char =/ %x20-10ffff
+ */
+void skip_comment(struct parser *parser)
+{
+    if (is_comment_start(parser)) {
+        advance(parser);
+
+        /*
+         * TODO: There are a handful of other characters that we aren't
+         *       checking for, but we should.
+         */
+        while (!is_newline_char(peek(parser)))
+            advance(parser);
+
+        parser->has_peeked = false;
+    }
 }
 
 /*
@@ -84,36 +106,14 @@ void skip_eol(struct parser *parser)
 }
 
 /*
- * comment = comment-start *comment-char
- * comment-start = %x23            ; #
- * comment-char = %x09             ; \t
- * comment-char =/ %x20-10ffff
- */
-void skip_comment(struct parser *parser)
-{
-    if (is_comment_start(parser)) {
-        read(parser);
-
-        /*
-         * TODO: There are a handful of other characters that we aren't
-         *       checking for, but we should.
-         */
-        while (!is_newline_char(peek(parser)))
-            read(parser);
-
-        parser->has_peeked = false;
-    }
-}
-
-/*
  * newline = [ %x0d ] %x0a         ; \r \n
  */
 void skip_newline(struct parser *parser)
 {
     if (peek(parser) == '\r')
-        read(parser);
+        advance(parser);
     if (peek(parser) == '\n') {
-        read(parser);
+        advance(parser);
         parser->has_peeked = false;
     }
 }
@@ -126,28 +126,32 @@ void skip_newline(struct parser *parser)
 void skip_whitespace(struct parser *parser)
 {
     while (is_whitespace_char(peek(parser)))
-        read(parser);
+        advance(parser);
 }
 
-static int read_numeric_literal(struct parser *parser)
+static int peek_numeric_literal(struct parser *parser)
 {
-    int ch;
+    int chr, offset = 0;
 
-    parser->peek.begin = parser->ptr;
+    parser->tok_next.begin = parser->pointer;
 
     if (peek(parser) == '0') {
-        read(parser);
+        offset = 1;
     } else {
         for (;;) {
-            ch = peek(parser);
-            if (ch < '0' || ch > '9')
+            chr = peek_offset(parser, offset);
+            if (chr < '0' || chr > '9')
                 break;
-            read(parser);
+            offset++;
         }
     }
 
-    parser->peek.type = TOKEN_NUMBER;
-    parser->peek.end = parser->ptr;
+    parser->tok_next.end = parser->tok_next.begin + offset;
+    if (parser->tok_next.begin == parser->tok_next.end)
+        return -1;
+
+    parser->tok_next.type = TOKEN_NUMBER;
+    parser->tok_peeked_chars = offset;
 
     return 0;
 }
@@ -214,131 +218,118 @@ static int keyword_to_token(const char *keyword, size_t len)
     return -1;
 }
 
-
-static int read_identifier(struct parser *parser)
+static int peek_identifier(struct parser *parser)
 {
+    size_t offset = 0;
     int type;
 
-    parser->peek.begin = parser->ptr;
+    parser->tok_next.begin = parser->pointer;
 
-    read(parser);
-    for (;;) {
-        if (!is_identifier(peek(parser)))
-            break;
-        read(parser);
-    }
+    while (is_identifier(peek_offset(parser, offset)))
+        offset++;
 
-    parser->peek.type = TOKEN_IDENTIFIER;
-    parser->peek.end = parser->ptr;
+    parser->tok_next.end = parser->tok_next.begin + offset;
+    if (parser->tok_next.begin == parser->tok_next.end)
+        return -1;
 
-    type = keyword_to_token(parser->peek.begin, parser->peek.end - parser->peek.begin);
+    parser->tok_next.type = TOKEN_IDENTIFIER;
+    parser->tok_peeked_chars = offset;
+
+    type = keyword_to_token(parser->tok_next.begin, offset);
     if (type != -1)
-        parser->peek.type = type;
+        parser->tok_next.type = type;
 
     return 0;
 }
 
-static int read_punctuator(struct parser *parser)
+static int peek_punctuator(struct parser *parser)
 {
-#define RETURN(type_)                                                           \
-    {                                                                           \
-        parser->peek.type = type_;                                              \
+#define X(type_, chars_)                                                   \
+    do {                                                                        \
+        parser->tok_next.type = (type_);                                        \
+        parser->tok_peeked_chars = (chars_);                                    \
         return 0;                                                               \
-    }
+    } while (0)
 
-    switch (read(parser)) {
-    case '+': RETURN(TOKEN_ADD);
-    case '~': RETURN(TOKEN_BITWISE_NOT);
-    case '^': RETURN(TOKEN_BITWISE_XOR);
-    case '/': RETURN(TOKEN_DIVIDE);
-    case '*': RETURN(TOKEN_MULTIPLY);
-    case '%': RETURN(TOKEN_MODULO);
-    case '(': RETURN(TOKEN_PAREN_LEFT);
-    case ')': RETURN(TOKEN_PAREN_RIGHT);
-    case '-': RETURN(TOKEN_SUBTRACT);
+    switch (peek(parser)) {
+    case '+': X(TOKEN_ADD, 1);
+    case '~': X(TOKEN_BITWISE_NOT, 1);
+    case '^': X(TOKEN_BITWISE_XOR, 1);
+    case '/': X(TOKEN_DIVIDE, 1);
+    case '*': X(TOKEN_MULTIPLY, 1);
+    case '%': X(TOKEN_MODULO, 1);
+    case '(': X(TOKEN_PAREN_LEFT, 1);
+    case ')': X(TOKEN_PAREN_RIGHT, 1);
+    case '-': X(TOKEN_SUBTRACT, 1);
 
     case '!':
-        if (peek(parser) == '=') {
-            read(parser);
-            RETURN(TOKEN_NOT_EQUALS);
-        }
-        RETURN(TOKEN_LOGICAL_NOT);
+        if (peek_offset(parser, 1) == '=')
+            X(TOKEN_NOT_EQUALS, 2);
+        X(TOKEN_LOGICAL_NOT, 1);
 
     case '&':
-        if (peek(parser) == '&') {
-            read(parser);
-            RETURN(TOKEN_LOGICAL_AND);
-        }
-        RETURN(TOKEN_BITWISE_AND);
+        if (peek_offset(parser, 1) == '&')
+            X(TOKEN_LOGICAL_AND, 2);
+        X(TOKEN_BITWISE_AND, 1);
 
     case '=':
-        if (peek(parser) == '=') {
-            read(parser);
-            RETURN(TOKEN_EQUALS);
-        }
-        RETURN(TOKEN_ASSIGN);
+        if (peek_offset(parser, 1) == '=')
+            X(TOKEN_EQUALS, 2);
+        X(TOKEN_ASSIGN, 1);
 
     case '|':
-        if (peek(parser) == '|') {
-            read(parser);
-            RETURN(TOKEN_LOGICAL_OR);
-        }
-        RETURN(TOKEN_BITWISE_OR);
+        if (peek_offset(parser, 1) == '|')
+            X(TOKEN_LOGICAL_OR, 2);
+        X(TOKEN_BITWISE_OR, 1);
 
     case '>':
-        if (peek(parser) == '=') {
-            read(parser);
-            RETURN(TOKEN_GREATER_THAN_EQUALS);
-        } else if (peek(parser) == '>') {
-            read(parser);
-            RETURN(TOKEN_BITWISE_SHIFT_RIGHT);
-        }
-        RETURN(TOKEN_GREATER_THAN);
+        if (peek_offset(parser, 1) == '=')
+            X(TOKEN_GREATER_THAN_EQUALS, 2);
+        if (peek_offset(parser, 1) == '>')
+            X(TOKEN_BITWISE_SHIFT_RIGHT, 2);
+        X(TOKEN_GREATER_THAN, 1);
 
     case '<':
-        if (peek(parser) == '=') {
-            read(parser);
-            RETURN(TOKEN_LESS_THAN_EQUALS);
-        } else if (peek(parser) == '<') {
-            read(parser);
-            RETURN(TOKEN_BITWISE_SHIFT_LEFT);
-        }
-        RETURN(TOKEN_LESS_THAN);
+        if (peek_offset(parser, 1) == '=')
+            X(TOKEN_LESS_THAN_EQUALS, 2);
+        if (peek_offset(parser, 1) == '<')
+            X(TOKEN_BITWISE_SHIFT_LEFT, 2);
+        X(TOKEN_LESS_THAN, 1);
 
     default:
         return -1;
     }
 
-#undef RETURN
+#undef X
 }
 
 struct token *peek_token(struct parser *parser)
 {
-    struct token *token;
+    struct token *tok;
 
-    token = &parser->peek;
+    tok = &parser->tok_next;
     if (parser->has_peeked)
         goto out;
 
     switch (peek(parser)) {
     default:
-        parser->peek.type = TOKEN_NONE;
+        parser->tok_next.type = TOKEN_NONE;
         break;
 
     case -1:
-        parser->peek.type = TOKEN_EOF;
+        parser->tok_next.type = TOKEN_EOF;
         break;
 
     case '0' ... '9':
-        if (read_numeric_literal(parser) != 0)
-            token = NULL;
+        if (peek_numeric_literal(parser) != 0)
+            tok = NULL;
         break;
 
     case 'A' ... 'A':
     case '_':
     case 'a' ... 'z':
-        if (read_identifier(parser) != 0)
-            token = NULL;
+        if (peek_identifier(parser) != 0)
+            tok = NULL;
         break;
 
     case '+':
@@ -356,14 +347,14 @@ struct token *peek_token(struct parser *parser)
     case '(':
     case ')':
     case '-':
-        if (read_punctuator(parser) != 0)
-            token = NULL;
+        if (peek_punctuator(parser) != 0)
+            tok = NULL;
         break;
     }
 
 out:
     parser->has_peeked = true;
-    return token;
+    return tok;
 }
 
 struct token *advance_token(struct parser *parser)
@@ -371,9 +362,10 @@ struct token *advance_token(struct parser *parser)
     if (!parser->has_peeked)
         peek_token(parser);
 
-    memcpy(&parser->curr, &parser->peek, sizeof(parser->curr));
-    parser->peek.type = TOKEN_NONE;
+    memcpy(&parser->tok_curr, &parser->tok_next, sizeof(parser->tok_curr));
+    parser->tok_next.type = TOKEN_NONE;
 
     parser->has_peeked = false;
-    return &parser->curr;
+    parser->pointer += parser->tok_peeked_chars;
+    return &parser->tok_curr;
 }

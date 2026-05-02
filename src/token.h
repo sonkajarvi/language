@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define KEYWORD_COUNT 11
+#define KEYWORD_COUNT 12
 
 #define TOKEN_LIST(x)                                                           \
     x(NONE)                     /* This is first so it's always 0. */           \

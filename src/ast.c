@@ -10,9 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ast.h"
 #include "node.h"
 #include "op.h"
+#include "parser.h"
 #include "token.h"
 
 static int token_to_op(struct token *token)

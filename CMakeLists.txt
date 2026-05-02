@@ -11,6 +11,7 @@ add_library(lang
     "src/lexer.c"
     "src/node.c"
     "src/op.c"
+    "src/parser.c"
 )
 
 target_compile_options(lang PRIVATE
