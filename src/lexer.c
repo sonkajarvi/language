@@ -69,9 +69,9 @@ static inline bool is_newline_char(int ch)
  * ws-char = %x09                  ; \t
  * ws-char =/ %x20                 ; space
  */
-static inline bool is_whitespace_char(int ch)
+bool is_whitespace_char(struct parser *parser)
 {
-    return ch == '\t' || ch == ' ';
+    return peek(parser) == '\t' || peek(parser) == ' ';
 }
 
 /*
@@ -125,7 +125,7 @@ void skip_newline(struct parser *parser)
  */
 void skip_whitespace(struct parser *parser)
 {
-    while (is_whitespace_char(peek(parser)))
+    while (is_whitespace_char(parser))
         advance(parser);
 }
 

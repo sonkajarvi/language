@@ -58,6 +58,7 @@ struct token *advance_token(struct parser *parser);
 
 bool is_comment_start(struct parser *parser);
 bool is_newline_sequence(struct parser *parser);
+bool is_whitespace_char(struct parser *parser);
 
 void skip_comment(struct parser *parser);
 void skip_eol(struct parser *parser);

@@ -305,7 +305,7 @@ out:
 }
 
 /*
- * statements-part = ws ( [ comment ] / ( statement eol ) )
+ * statements-part = [ ws statement ] eol
  *
  * statement = for-statement
  * statement =/ function-statement
@@ -316,16 +316,13 @@ out:
  */
 static struct node *parse_statements_part(struct parser *parser)
 {
-    struct node *stmt;
+    struct node *stmt = NULL;
     struct token *tok;
 
     skip_whitespace(parser);
 
-    if (is_comment_start(parser))
-        skip_comment(parser);
-
+    /* statement */
     tok = peek_token(parser);
-
     switch (tok->type) {
     case TOKEN_LET:
         stmt = parse_variable_statement(parser);
@@ -337,8 +334,10 @@ static struct node *parse_statements_part(struct parser *parser)
 
     default:
         parser->errno = 0;
-        return NULL;
+        break;
     }
+
+    skip_eol(parser);
 
     return stmt;
 }
@@ -351,30 +350,26 @@ struct node *parse_statements(struct parser *parser)
     struct node *stmts, **tmp;
 
     stmts = parse_statements_part(parser);
-
-    if (stmts) {
-        tmp = &stmts->next;
-
-        for (;;) {
-            if (!is_newline_sequence(parser)) {
-                parser->errno = EXPECTED_NEWLINE;
-                free_node(stmts);
-                return NULL;
-            }
-            skip_newline(parser);
-
-            *tmp = parse_statements_part(parser);
-            if (!*tmp)
-                break;
-
-            tmp = &((*tmp)->next);
-        }
-    }
-
     if (parser->errno != 0)
         return NULL;
 
+    tmp = stmts ? &stmts->next : &stmts;
+
+    while (is_newline_sequence(parser)) {
+        skip_newline(parser);
+
+        *tmp = parse_statements_part(parser);
+        if (parser->errno != 0)
+            goto err;
+        if (*tmp)
+            tmp = &((*tmp)->next);
+    }
+
     return stmts;
+
+err:
+    free_node(stmts);
+    return NULL;
 }
 
 /*
