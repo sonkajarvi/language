@@ -7,7 +7,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(lang
-    "src/ast.c"
     "src/lexer.c"
     "src/node.c"
     "src/op.c"
