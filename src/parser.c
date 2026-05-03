@@ -270,12 +270,16 @@ static struct node *parse_statements_part(struct parser *parser)
     /* statement */
     tok = peek_token(parser);
     switch (tok->type) {
+    case TOKEN_IF:
+        stmt = parse_if_statement(parser);
+        break;
+
     case TOKEN_LET:
         stmt = parse_variable_statement(parser);
         break;
 
-    case TOKEN_IF:
-        stmt = parse_if_statement(parser);
+    case TOKEN_RETURN:
+        stmt = parse_return_statement(parser);
         break;
 
     case TOKEN_WHILE:
@@ -535,6 +539,35 @@ err:
     free_if_part(if_part);
     free_elif_parts(elif_parts);
     free_else_part(else_part);
+    return NULL;
+}
+
+/*
+ * return-statement = return-keyword ws [ expression ]
+ */
+struct node *parse_return_statement(struct parser *parser)
+{
+    struct node *ret, *expr = NULL;
+
+    /* return */
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    if (is_newline_sequence(parser))
+        goto end;
+
+    /* expression */
+    expr = parse_expression(parser);
+    if (!expr)
+        return NULL;
+
+end:
+    ret = new_return_statement(expr);
+    if (ret)
+        return ret;
+
+    parser->errno = OUT_OF_MEMORY;
+    free_node(expr);
     return NULL;
 }
 
