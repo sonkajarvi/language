@@ -11,6 +11,7 @@ add_library(lang
     "src/node.c"
     "src/op.c"
     "src/parser.c"
+    "src/print.c"
 )
 
 target_compile_options(lang PRIVATE
