@@ -16,6 +16,7 @@ enum {
     NODE_VARIABLE_STATEMENT,
     NODE_IF_STATEMENT,
     NODE_WHILE_STATEMENT,
+    NODE_RETURN_STATEMENT,
 
     NODE_COUNT,
     NODE_FIRST = 0,
@@ -57,14 +58,6 @@ struct type {
     int type;
 };
 
-struct variable_statement {
-    struct node node;
-
-    struct source_range ident;
-    struct type *type;
-    struct node *value;
-};
-
 struct if_part {
     struct node        *test, *stmts;
 };
@@ -80,9 +73,24 @@ struct else_part {
 
 struct if_statement {
     struct node         node;
+
     struct if_part     *if_part;
     struct elif_part   *elif_parts;
     struct else_part   *else_part;
+};
+
+struct return_statement {
+    struct node node;
+
+    struct node *expr;
+};
+
+struct variable_statement {
+    struct node node;
+
+    struct source_range ident;
+    struct type *type;
+    struct node *value;
 };
 
 struct while_statement {
@@ -102,12 +110,11 @@ struct node *new_number(const char *begin, const char *end);
 struct node *new_binary_op(int op, struct node *left, struct node *right);
 struct node *new_unary_op(int op, struct node *expr);
 
-struct node *new_variable_statement(struct source_range *ident,
-                                struct type *type, struct node *value);
-
 struct node *new_if_statement(struct if_part *if_part,
                     struct elif_part *elif_parts, struct else_part *else_part);
-
+struct node *new_return_statement(struct node *expr);
+struct node *new_variable_statement(struct source_range *ident,
+                                    struct type *type, struct node *value);
 struct node *new_while_statement(struct node *test, struct node *stmts);
 
 #endif /* __SRC_NODE_H */
