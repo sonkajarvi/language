@@ -15,6 +15,7 @@ enum {
     NODE_UNARY_OP,
     NODE_VARIABLE_STATEMENT,
     NODE_IF_STATEMENT,
+    NODE_WHILE_STATEMENT,
 
     NODE_COUNT,
     NODE_FIRST = 0,
@@ -84,6 +85,11 @@ struct if_statement {
     struct else_part   *else_part;
 };
 
+struct while_statement {
+    struct node node;
+    struct node *test, *stmts;
+};
+
 void free_node(struct node *node);
 void free_if_part(struct if_part *part);
 void free_elif_parts(struct elif_part *parts);
@@ -101,5 +107,7 @@ struct node *new_variable_statement(struct source_range *ident,
 
 struct node *new_if_statement(struct if_part *if_part,
                     struct elif_part *elif_parts, struct else_part *else_part);
+
+struct node *new_while_statement(struct node *test, struct node *stmts);
 
 #endif /* __SRC_NODE_H */

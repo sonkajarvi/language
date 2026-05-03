@@ -84,6 +84,10 @@ void free_node(struct node *node)
         free_elif_parts(((struct if_statement *)node)->elif_parts);
         free_else_part(((struct if_statement *)node)->else_part);
         break;
+
+    case NODE_WHILE_STATEMENT:
+        free_node(((struct while_statement *)node)->test);
+        free_node(((struct while_statement *)node)->stmts);
     }
 
     free_node(node->next);
@@ -221,6 +225,25 @@ static void print_if_statement(struct if_statement *node, int indent)
     }
 }
 
+static void print_while_statement(struct while_statement *node, int indent)
+{
+    struct node *tmp;
+
+    _indent(indent);
+    printf("WhileStatement:\n");
+
+    /* test */
+    _indent(indent + 1);
+    printf("Test:\n");
+    _print_node(node->test, indent + 2);
+
+    /* statements */
+    _indent(indent + 1);
+    printf("Statements:\n");
+    for (tmp = node->stmts; tmp; tmp = tmp->next)
+        _print_node(tmp, indent + 2);
+}
+
 void _print_node(struct node *node, int indent)
 {
     if (!node) {
@@ -253,6 +276,9 @@ void _print_node(struct node *node, int indent)
     case NODE_IF_STATEMENT:
         print_if_statement((struct if_statement *)node, indent);
         break;
+
+    case NODE_WHILE_STATEMENT:
+        print_while_statement((struct while_statement *)node, indent);
     }
 }
 
@@ -354,6 +380,20 @@ struct node *new_if_statement(struct if_part *if_part,
     node->if_part = if_part;
     node->elif_parts = elif_parts;
     node->else_part = else_part;
+
+    return &node->node;
+}
+
+struct node *new_while_statement(struct node *test, struct node *stmts)
+{
+    struct while_statement *node;
+
+    node = node_alloc(sizeof(*node), NODE_WHILE_STATEMENT);
+    if (!node)
+        return NULL;
+
+    node->test = test;
+    node->stmts = stmts;
 
     return &node->node;
 }
