@@ -43,7 +43,7 @@ if-part = if-keyword ws expression eol newline statements
 elif-part = elif-keyword ws expression eol newline statements
 else-part = else-keyword eol newline statements
 
-return-statement = return-keyword ws expression
+return-statement = return-keyword ws [ expression ]
 
 variable-statement = let-keyword ws identifier ws type
 variable-statement =/ let-keyword ws identifier ws [ type ws ] "=" ws expression
