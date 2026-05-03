@@ -278,6 +278,10 @@ static struct node *parse_statements_part(struct parser *parser)
         stmt = parse_if_statement(parser);
         break;
 
+    case TOKEN_WHILE:
+        stmt = parse_while_statement(parser);
+        break;
+
     default:
         parser->errno = 0;
         break;
@@ -608,5 +612,47 @@ out:
     free_node(value);
 
     parser->errno = OUT_OF_MEMORY;
+    return NULL;
+}
+
+/*
+ * while-statement = while-keyword ws expression eol newline statements ws end-keyword
+ */
+struct node *parse_while_statement(struct parser *parser)
+{
+    struct node *ret, *test, *stmts = NULL;
+
+    /* while */
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* test */
+    test = parse_expression(parser);
+    if (!test)
+        goto err;
+
+    skip_eol(parser);
+
+    /* newline */
+    if (!is_newline_sequence(parser)) {
+        parser->errno = EXPECTED_NEWLINE;
+        goto err;
+    }
+    skip_newline(parser);
+
+    /* statements */
+    stmts = parse_statements(parser);
+    if (!stmts && parser->errno != 0)
+        goto err;
+
+    ret = new_while_statement(test, stmts);
+    if (ret)
+        return ret;
+
+    parser->errno = OUT_OF_MEMORY;
+
+err:
+    free_node(test);
+    free_node(stmts);
     return NULL;
 }

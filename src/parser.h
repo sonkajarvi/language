@@ -73,5 +73,6 @@ struct node *parse_statements(struct parser *parser);
 
 struct node *parse_if_statement(struct parser *parser);
 struct node *parse_variable_statement(struct parser *parser);
+struct node *parse_while_statement(struct parser *parser);
 
 #endif /* __SRC_PARSER_H */
