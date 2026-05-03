@@ -196,6 +196,7 @@ void init_keywords(void)
     X("int", TOKEN_INT);
     X("let", TOKEN_LET);
     X("real", TOKEN_REAL);
+    X("return", TOKEN_RETURN);
     X("string", TOKEN_STRING);
     X("while", TOKEN_WHILE);
 

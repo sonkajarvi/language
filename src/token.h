@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define KEYWORD_COUNT 12
+#define KEYWORD_COUNT 13
 
 #define TOKEN_LIST(x)                                                           \
     x(NONE)                     /* This is first so it's always 0. */           \
@@ -52,6 +52,7 @@
     x(PAREN_LEFT)               /* ( */                                         \
     x(PAREN_RIGHT)              /* ) */                                         \
     x(REAL)                     /* real */                                      \
+    x(RETURN)                   /* return */                                    \
     x(STRING)                   /* string */                                    \
     x(SUBTRACT)                 /* - */                                         \
     x(WHILE)                    /* while */
