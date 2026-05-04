@@ -95,17 +95,18 @@ type =/ real-keyword
 type =/ string-keyword
 type =/ "[" ws [ type ws ] "]" type
 
+;
+; Identifiers
+; ===========
+;
+identifier = identifier-start *identifier-part
 
-; identifiers
+identifier-start = "_"
+identifier-start =/ %x41-5a             ; A-Z
+identifier-start =/ %x61-7a             ; a-z
 
-identifier = id-start *id-part
-
-id-start = %x41-5a              ; A-Z
-id-start =/ %x5f                ; _
-id-start =/ %x61-7a             ; a-z
-
-id-part = id-start
-id-part =/ %x30-39              ; 0-9
+identifier-part = identifier-start
+identifier-part =/ %x30-39              ; 0-9
 
 
 ; literals
