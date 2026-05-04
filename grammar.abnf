@@ -39,23 +39,30 @@ statement =/ return-statement
 statement =/ variable-statement
 statement =/ while-statement
 
-for-statement = for-keyword ws identifier ws "=" ws expression ws "," ws expression [ ws "," ws expression ] eol newline statements ws end-keyword
+for-statement = for-keyword ws identifier ws "=" ws expression
+                ws "," ws expression [ ws "," ws expression ] eol newline
+                statements
+                ws end-keyword
 
-function-statement = fun-keyword ws identifier ws args ws type eol newline statements ws end-keyword
-args = "(" ws arg *( ws "," ws arg ) ws ")"
-arg = identifier ws type
+function-statement = fun-keyword ws identifier ws arguments ws type eol newline
+                     statements
+                     ws end-keyword
+arguments = "(" ws argument *( ws "," ws argument ) ws ")"
+argument = identifier ws type
 
-if-statement = if-part *( elif-part ) [ else-part ] ws end-keyword
-if-part = if-keyword ws expression eol newline statements
-elif-part = elif-keyword ws expression eol newline statements
-else-part = else-keyword eol newline statements
+if-statement = if-keyword ws expression eol newline statements
+               *( elif-keyword ws expression eol newline statements )
+               [ else-keyword eol newline statements ]
+               ws end-keyword
 
-return-statement = return-keyword ws [ expression ]
+return-statement = return-keyword [ ws expression ]
 
 variable-statement = let-keyword ws identifier ws type
 variable-statement =/ let-keyword ws identifier ws [ type ws ] "=" ws expression
 
-while-statement = while-keyword ws expression eol newline statements ws end-keyword
+while-statement = while-keyword ws expression eol newline
+                  statements
+                  ws end-keyword
 
 ;
 ; Expressions
