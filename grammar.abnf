@@ -1,16 +1,23 @@
+;
+; Copyright (c) 2026, sonkajarvi
+;
+; Licensed under the BSD 2-Clause License.
+; The full license can be found in the LICENSE.txt file.
+;
+
 ; ABNF grammar for the language
 
 lang = statements
 
-
-; whitespace
-
+;
+; Whitespace
+; ----------
+;
 ws = *ws-char
 ws-char = %x09                  ; \t
 ws-char =/ %x20                 ; space
 
 newline = [ %x0d ] %x0a         ; \r \n
-
 eol = ws [ comment ]
 
 comment = comment-start *comment-char
@@ -18,9 +25,10 @@ comment-start = %x23            ; #
 comment-char = %x09             ; \t
 comment-char =/ %x20-10ffff
 
-
-; statements
-
+;
+; Statements
+; ----------
+;
 statements = statements-part *( newline statements-part )
 statements-part = [ ws statement ] eol
 
@@ -30,7 +38,6 @@ statement =/ if-statement
 statement =/ return-statement
 statement =/ variable-statement
 statement =/ while-statement
-
 
 for-statement = for-keyword ws identifier ws "=" ws expression ws "," ws expression [ ws "," ws expression ] eol newline statements ws end-keyword
 
@@ -50,9 +57,10 @@ variable-statement =/ let-keyword ws identifier ws [ type ws ] "=" ws expression
 
 while-statement = while-keyword ws expression eol newline statements ws end-keyword
 
-
-; expressions
-
+;
+; Expressions
+; -----------
+;
 expression = logical-expression
 
 logical-expression = relational-expression
@@ -87,7 +95,7 @@ primary-expression =/ ( "-" / "~" / "!" ) ws primary-expression
 
 ;
 ; Types
-; =====
+; -----
 ;
 type = bool-keyword
 type =/ int-keyword
@@ -97,7 +105,7 @@ type =/ "[" ws [ type ws ] "]" type
 
 ;
 ; Identifiers
-; ===========
+; -----------
 ;
 identifier = identifier-start *identifier-part
 
@@ -110,13 +118,13 @@ identifier-part =/ %x30-39              ; 0-9
 
 ;
 ; Booleans
-; ========
+; --------
 ;
 bool = true-keyword / false-keyword
 
 ;
 ; Integers
-; ========
+; --------
 ;
 int = "0" / %x31-39 *DIGIT          ; 1-9
 
@@ -127,7 +135,7 @@ int = "0" / %x31-39 *DIGIT          ; 1-9
 
 ;
 ; Keywords
-; ========
+; --------
 ;
 bool-keyword = %x62.6f.6f.6c                ; bool
 elif-keyword = %x65.6c.69.66                ; elif
