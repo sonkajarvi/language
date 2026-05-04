@@ -82,7 +82,7 @@ bitwise-expression = primary-expression ws "<<" ws primary-expression
 bitwise-expression = primary-expression ws ">>" ws primary-expression
 
 primary-expression = "(" ws expression ws ")"
-primary-expression =/ number / bool / identifier
+primary-expression =/ bool / int / identifier
 primary-expression =/ ( "-" / "~" / "!" ) ws primary-expression
 
 ;
@@ -108,17 +108,22 @@ identifier-start =/ %x61-7a             ; a-z
 identifier-part = identifier-start
 identifier-part =/ %x30-39              ; 0-9
 
+;
+; Booleans
+; ========
+;
+bool = true-keyword / false-keyword
 
-; literals
+;
+; Integers
+; ========
+;
+int = "0" / %x31-39 *DIGIT          ; 1-9
 
-bool = %x74.72.75.65            ; true
-bool =/ %x66.61.6c.73.65        ; false
-
-number = zero / non-zero
-non-zero = %x31-39 *DIGIT       ; 1 - 9
-zero = %x30                     ; 0
-
-
+; TODO: Reals
+; TODO: Strings
+; TODO: Arrays
+; TODO: Maps
 
 ;
 ; Keywords
