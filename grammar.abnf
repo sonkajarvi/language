@@ -85,10 +85,15 @@ primary-expression = "(" ws expression ws ")"
 primary-expression =/ number / bool / identifier
 primary-expression =/ ( "-" / "~" / "!" ) ws primary-expression
 
-
-; types
-
-type = "bool" / "int" / "real" / "string"
+;
+; Types
+; =====
+;
+type = bool-keyword
+type =/ int-keyword
+type =/ real-keyword
+type =/ string-keyword
+type =/ "[" ws [ type ws ] "]" type
 
 
 ; identifiers
