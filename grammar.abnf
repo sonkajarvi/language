@@ -119,12 +119,16 @@ non-zero = %x31-39 *DIGIT       ; 1 - 9
 zero = %x30                     ; 0
 
 
-; keywords
 
+;
+; Keywords
+; ========
+;
 bool-keyword = %x62.6f.6f.6c                ; bool
 elif-keyword = %x65.6c.69.66                ; elif
 else-keyword = %x65.6c.73.65                ; else
 end-keyword = %x65.6e.64                    ; end
+false-keyword = %x66.61.6c.73.65            ; false
 for-keyword = %x66.6f.72                    ; for
 fun-keyword = %x66.75.6e                    ; fun
 if-keyword = %x69.66                        ; if
@@ -133,4 +137,5 @@ let-keyword = %x6c.65.74                    ; let
 real-keyword = %x72.65.61.6c                ; real
 return-keyword = %x72.65.74.75.72.6e        ; return
 string-keyword = %x73.74.72.69.6e.67        ; string
+true-keyword = %x74.72.75.65                ; true
 while-keyword = %x77.68.69.6c.65            ; while
