@@ -156,7 +156,12 @@ static void print_variable_statement(struct variable_statement *node, int depth)
 
     /* type */
     indent(depth + 1);
-    printf("Type: %s\n", node->type ? type_to_string(node->type->type) : EMPTY_STRING);
+    printf("Type: ");
+    if (node->type)
+        type_print(node->type);
+    else
+        printf("%s", EMPTY_STRING);
+    printf("\n");
 
     /* expression */
     indent(depth + 1);

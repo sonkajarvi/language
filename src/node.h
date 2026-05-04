@@ -8,6 +8,8 @@
 #ifndef __SRC_NODE_H
 #define __SRC_NODE_H
 
+#include "type.h"
+
 enum {
     NODE_IDENTIFIER,
     NODE_NUMBER,
@@ -52,10 +54,6 @@ struct unary_op {
 
 struct source_range {
     const char *begin, *end;
-};
-
-struct type {
-    int type;
 };
 
 struct if_part {

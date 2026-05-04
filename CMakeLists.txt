@@ -12,6 +12,7 @@ add_library(lang
     "src/op.c"
     "src/parser.c"
     "src/print.c"
+    "src/type.c"
 )
 
 target_compile_options(lang PRIVATE
