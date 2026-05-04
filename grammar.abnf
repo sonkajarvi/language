@@ -44,11 +44,11 @@ for-statement = for-keyword ws identifier ws "=" ws expression
                 statements
                 ws end-keyword
 
-function-statement = fun-keyword ws identifier ws arguments ws type eol newline
+function-statement = fun-keyword ws identifier ws arguments ws ":" ws type eol newline
                      statements
                      ws end-keyword
 arguments = "(" ws argument *( ws "," ws argument ) ws ")"
-argument = identifier ws type
+argument = identifier ws ":" ws type
 
 if-statement = if-keyword ws expression eol newline statements
                *( elif-keyword ws expression eol newline statements )
@@ -57,8 +57,8 @@ if-statement = if-keyword ws expression eol newline statements
 
 return-statement = return-keyword [ ws expression ]
 
-variable-statement = let-keyword ws identifier ws type
-variable-statement =/ let-keyword ws identifier ws [ type ws ] "=" ws expression
+variable-statement = let-keyword ws identifier ws ":" ws type
+variable-statement =/ let-keyword ws identifier ws [ ":" ws type ws ] "=" ws expression
 
 while-statement = while-keyword ws expression eol newline
                   statements
