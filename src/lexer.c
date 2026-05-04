@@ -256,6 +256,8 @@ static int peek_punctuator(struct parser *parser)
     case '+': X(TOKEN_ADD, 1);
     case '~': X(TOKEN_BITWISE_NOT, 1);
     case '^': X(TOKEN_BITWISE_XOR, 1);
+    case '[': X(TOKEN_BRACKET_LEFT, 1);
+    case ']': X(TOKEN_BRACKET_RIGHT, 1);
     case '/': X(TOKEN_DIVIDE, 1);
     case '*': X(TOKEN_MULTIPLY, 1);
     case '%': X(TOKEN_MODULO, 1);
@@ -340,6 +342,8 @@ struct token *peek_token(struct parser *parser)
     case '>':
     case '<':
     case '^':
+    case '[':
+    case ']':
     case '/':
     case '=':
     case '*':

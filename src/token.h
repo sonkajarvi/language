@@ -27,6 +27,8 @@
     x(BITWISE_SHIFT_RIGHT)      /* << */                                        \
     x(BITWISE_XOR)              /* ^ */                                         \
     x(BOOL)                     /* bool */                                      \
+    x(BRACKET_LEFT)             /* [ */                                         \
+    x(BRACKET_RIGHT)            /* ] */                                         \
     x(DIVIDE)                   /* / */                                         \
     x(ELIF)                     /* elif */                                      \
     x(ELSE)                     /* else */                                      \
