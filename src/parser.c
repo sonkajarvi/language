@@ -12,6 +12,7 @@
 #include "op.h"
 #include "parser.h"
 #include "token.h"
+#include "type.h"
 
 struct parser *parser_create(const char *src, size_t len)
 {
@@ -215,39 +216,6 @@ struct node *parse_expression(struct parser *parser)
 
 out:
     return ret;
-}
-
-/*
- * type = "bool" / "int" / "real" / "string"
- */
-static struct type *parse_type(struct parser *parser)
-{
-    struct token *tok;
-    struct type *type;
-
-    tok = peek_token(parser);
-    if (!tok)
-        return NULL;
-
-    switch (tok->type) {
-    case TOKEN_BOOL:
-    case TOKEN_INT:
-    case TOKEN_REAL:
-    case TOKEN_STRING:
-        tok = advance_token(parser);
-
-        type = malloc(sizeof(*type));
-        if (!type) {
-            parser->errno = OUT_OF_MEMORY;
-            return NULL;
-        }
-
-        type->type = tok->type;
-        return type;
-
-    default:
-        return NULL;
-    }
 }
 
 /*
@@ -688,4 +656,79 @@ err:
     free_node(test);
     free_node(stmts);
     return NULL;
+}
+
+static inline int token_to_type_kind(const struct token *token)
+{
+    switch (token->type) {
+    case TOKEN_BOOL: return TYPE_BOOL;
+    case TOKEN_INT: return TYPE_INT;
+    case TOKEN_REAL: return TYPE_REAL;
+    case TOKEN_STRING: return TYPE_STRING;
+    }
+
+    __builtin_unreachable();
+}
+
+/*
+ * type = bool-keyword
+ * type =/ int-keyword
+ * type =/ real-keyword
+ * type =/ string-keyword
+ * type =/ "[" ws [ type ws ] "]" type
+ */
+struct type *parse_type(struct parser *parser)
+{
+    struct token *token;
+    struct type *type, *value, *key = NULL;
+
+    token = peek_token(parser);
+    if (!token)
+        return NULL;
+
+    switch (token->type) {
+    case TOKEN_BOOL:
+    case TOKEN_INT:
+    case TOKEN_REAL:
+    case TOKEN_STRING:
+        token = advance_token(parser);
+        type = type_alloc(token_to_type_kind(token), NULL, NULL);
+        if (!type)
+            parser->errno = OUT_OF_MEMORY;
+        break;
+
+    case TOKEN_BRACKET_LEFT:
+        advance_token(parser);
+        skip_whitespace(parser);
+
+        /* key */
+        token = peek_token(parser);
+        if (token->type != TOKEN_BRACKET_RIGHT) {
+            key = parse_type(parser);
+            if (!key) {
+                parser->errno = OUT_OF_MEMORY;
+                break;
+            }
+            skip_whitespace(parser);
+        }
+
+        advance_token(parser);          /* skip ] */
+
+        /* value */
+        value = parse_type(parser);
+        if (!value) {
+            parser->errno = OUT_OF_MEMORY;
+            break;
+        }
+
+        type = type_alloc(key ? TYPE_MAP : TYPE_ARRAY, key, value);
+        if (!type)
+            parser->errno = OUT_OF_MEMORY;
+        break;
+
+    default:
+        return NULL;
+    }
+
+    return type;
 }

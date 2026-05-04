@@ -13,6 +13,7 @@
 
 #include "node.h"
 #include "token.h"
+#include "type.h"
 
 #define PARSER_LINE_COLUMN_DEFAULT 1
 
@@ -75,5 +76,7 @@ struct node *parse_if_statement(struct parser *parser);
 struct node *parse_return_statement(struct parser *parser);
 struct node *parse_variable_statement(struct parser *parser);
 struct node *parse_while_statement(struct parser *parser);
+
+struct type *parse_type(struct parser *parser);
 
 #endif /* __SRC_PARSER_H */
