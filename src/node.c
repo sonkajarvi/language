@@ -65,37 +65,37 @@ void free_node(struct node *node)
 
     switch (node->type) {
     case NODE_BINARY_OP:
-        free_node(((struct binary_op *)node)->expr);
+        free_node(FROM_NODE_AS(node, struct binary_op)->expr);
         break;
 
     case NODE_UNARY_OP:
-        free_node(((struct unary_op *)node)->expr);
+        free_node(FROM_NODE_AS(node, struct unary_op)->expr);
         break;
 
     case NODE_FUNCTION_STATEMENT:
-        free_parameters(((struct function_statement *)node)->params);
-        type_free(((struct function_statement *)node)->type);
-        free_node(((struct function_statement *)node)->stmts);
+        free_parameters(FROM_NODE_AS(node, struct function_statement)->params);
+        type_free(FROM_NODE_AS(node, struct function_statement)->type);
+        free_node(FROM_NODE_AS(node, struct function_statement)->stmts);
         break;
 
     case NODE_IF_STATEMENT:
-        free_if_part(((struct if_statement *)node)->if_part);
-        free_elif_parts(((struct if_statement *)node)->elif_parts);
-        free_else_part(((struct if_statement *)node)->else_part);
+        free_if_part(FROM_NODE_AS(node, struct if_statement)->if_part);
+        free_elif_parts(FROM_NODE_AS(node, struct if_statement)->elif_parts);
+        free_else_part(FROM_NODE_AS(node, struct if_statement)->else_part);
         break;
 
     case NODE_RETURN_STATEMENT:
-        free_node(((struct return_statement *)node)->expr);
+        free_node(FROM_NODE_AS(node, struct return_statement)->expr);
         break;
 
     case NODE_VARIABLE_STATEMENT:
-        free(((struct variable_statement *)node)->type);
-        free_node(((struct variable_statement *)node)->value);
+        free(FROM_NODE_AS(node, struct variable_statement)->type);
+        free_node(FROM_NODE_AS(node, struct variable_statement)->value);
         break;
 
     case NODE_WHILE_STATEMENT:
-        free_node(((struct while_statement *)node)->test);
-        free_node(((struct while_statement *)node)->stmts);
+        free_node(FROM_NODE_AS(node, struct while_statement)->test);
+        free_node(FROM_NODE_AS(node, struct while_statement)->stmts);
         break;
     }
 
@@ -123,7 +123,7 @@ struct node *new_identifier(const char *begin, const char *end)
         node->end = end;
     }
 
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_number(const char *begin, const char *end)
@@ -136,7 +136,7 @@ struct node *new_number(const char *begin, const char *end)
         node->end = end;
     }
 
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_binary_op(int op, struct node *left, struct node *right)
@@ -151,7 +151,7 @@ struct node *new_binary_op(int op, struct node *left, struct node *right)
     node->expr = left;
     node->expr->next = right;
 
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_unary_op(int op, struct node *expr)
@@ -165,7 +165,7 @@ struct node *new_unary_op(int op, struct node *expr)
     node->op = op;
     node->expr = expr;
 
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_function_statement(struct source_range *name,
@@ -183,7 +183,7 @@ struct node *new_function_statement(struct source_range *name,
     node->type = type;
     node->stmts = stmts;
 
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_if_statement(struct if_part *if_part,
@@ -199,7 +199,7 @@ struct node *new_if_statement(struct if_part *if_part,
     node->elif_parts = elif_parts;
     node->else_part = else_part;
 
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_return_statement(struct node *expr)
@@ -211,7 +211,7 @@ struct node *new_return_statement(struct node *expr)
         return NULL;
 
     node->expr = expr;
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_variable_statement(struct source_range *ident,
@@ -227,7 +227,7 @@ struct node *new_variable_statement(struct source_range *ident,
     node->type = type;
     node->value = value;
 
-    return &node->node;
+    return TO_NODE(node);
 }
 
 struct node *new_while_statement(struct node *test, struct node *stmts)
@@ -241,5 +241,5 @@ struct node *new_while_statement(struct node *test, struct node *stmts)
     node->test = test;
     node->stmts = stmts;
 
-    return &node->node;
+    return TO_NODE(node);
 }

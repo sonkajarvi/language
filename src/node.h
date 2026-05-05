@@ -10,6 +10,24 @@
 
 #include "type.h"
 
+/**
+ * TO_NODE - Convert node implementation to base node
+ * @some:       Pointer to some node implementation
+ */
+#define TO_NODE(some) (&((some)->node))
+
+/**
+ * FROM_NODE - Convert base node to node implementation
+ * @node:       Pointer to the base node
+ */
+#define FROM_NODE(node) FROM_NODE_AS((node), void)
+
+/**
+ * FROM_NODE_AS - Actually convert base to node implementation
+ * @node:       Pointer to the base node
+ */
+#define FROM_NODE_AS(node, type) ((type *)(node))
+
 enum {
     NODE_IDENTIFIER,
     NODE_NUMBER,

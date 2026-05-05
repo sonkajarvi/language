@@ -251,39 +251,39 @@ void print_node_depth(struct node *node, int depth)
 
     switch (node->type) {
     case NODE_IDENTIFIER:
-        print_identifier((struct identifier *)node, depth);
+        print_identifier(FROM_NODE(node), depth);
         break;
 
     case NODE_NUMBER:
-        print_number((struct number *)node, depth);
+        print_number(FROM_NODE(node), depth);
         break;
 
     case NODE_BINARY_OP:
-        print_binary_op((struct binary_op *)node, depth);
+        print_binary_op(FROM_NODE(node), depth);
         break;
 
     case NODE_UNARY_OP:
-        print_unary_op((struct unary_op *)node, depth);
+        print_unary_op(FROM_NODE(node), depth);
         break;
 
     case NODE_FUNCTION_STATEMENT:
-        print_function_statement((struct function_statement *)node, depth);
+        print_function_statement(FROM_NODE(node), depth);
         break;
 
     case NODE_IF_STATEMENT:
-        print_if_statement((struct if_statement *)node, depth);
+        print_if_statement(FROM_NODE(node), depth);
         break;
 
     case NODE_RETURN_STATEMENT:
-        print_return_statement((struct return_statement *)node, depth);
+        print_return_statement(FROM_NODE(node), depth);
         break;
 
     case NODE_VARIABLE_STATEMENT:
-        print_variable_statement((struct variable_statement *)node, depth);
+        print_variable_statement(FROM_NODE(node), depth);
         break;
 
     case NODE_WHILE_STATEMENT:
-        print_while_statement((struct while_statement *)node, depth);
+        print_while_statement(FROM_NODE(node), depth);
     }
 }
 
