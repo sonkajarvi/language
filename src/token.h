@@ -30,6 +30,7 @@
     x(BRACKET_LEFT)             /* [ */                                         \
     x(BRACKET_RIGHT)            /* ] */                                         \
     x(COLON)                    /* : */                                         \
+    x(COMMA)                    /* , */                                         \
     x(DIVIDE)                   /* / */                                         \
     x(ELIF)                     /* elif */                                      \
     x(ELSE)                     /* else */                                      \
