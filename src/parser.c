@@ -540,14 +540,14 @@ end:
 }
 
 /*
- * variable-statement = let-keyword ws identifier ws type
- * variable-statement =/ let-keyword ws identifier ws [ type ws ] "=" ws expression
+ * variable-statement = let-keyword ws identifier ws ":" ws type
+ * variable-statement =/ let-keyword ws identifier ws [ ":" ws type ws ] "=" ws expression
  */
 struct node *parse_variable_statement(struct parser *parser)
 {
-    struct token *tok;
+    struct token *token;
     struct source_range ident;
-    struct type *type;
+    struct type *type = NULL;
     struct node *node, *value = NULL;
 
     /*
@@ -558,27 +558,33 @@ struct node *parse_variable_statement(struct parser *parser)
     skip_whitespace(parser);
 
     /* identifier */
-    tok = peek_token(parser);
-    if (tok->type != TOKEN_IDENTIFIER) {
+    token = peek_token(parser);
+    if (token->type != TOKEN_IDENTIFIER) {
         parser->errno = EXPECTED_IDENTIFIER;
         return NULL;
     }
 
-    ident.begin = tok->begin;
-    ident.end = tok->end;
+    ident.begin = token->begin;
+    ident.end = token->end;
 
     advance_token(parser);
     skip_whitespace(parser);
 
     /* type */
-    type = parse_type(parser);
-    if (!type && parser->errno != 0)
-        return NULL;
+    token = peek_token(parser);
+    if (token->type == TOKEN_COLON) {
+        advance_token(parser);
+        skip_whitespace(parser);
+
+        type = parse_type(parser);
+        if (!type)
+            return NULL;
+    }
 
     skip_whitespace(parser);
 
-    tok = peek_token(parser);
-    if (tok->type != TOKEN_ASSIGN) {
+    token = peek_token(parser);
+    if (token->type != TOKEN_ASSIGN) {
         if (!type) {
             /*
              * We didn't get a type or an assignment token; we cannot continue
@@ -684,7 +690,7 @@ struct type *parse_type(struct parser *parser)
 
     token = peek_token(parser);
     if (!token)
-        return NULL;
+        goto err;
 
     switch (token->type) {
     case TOKEN_BOOL:
@@ -727,8 +733,12 @@ struct type *parse_type(struct parser *parser)
         break;
 
     default:
-        return NULL;
+        goto err;
     }
 
     return type;
+
+err:
+    parser->errno = EXPECTED_TYPE;
+    return NULL;
 }

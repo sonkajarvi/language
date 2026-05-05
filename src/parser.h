@@ -26,6 +26,7 @@ enum {
     EXPECTED_NEWLINE,
     EXPECTED_IF,
     EXPECTED_END,
+    EXPECTED_TYPE,
 
     OUT_OF_MEMORY,
 };
