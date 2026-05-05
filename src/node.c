@@ -10,6 +10,17 @@
 #include <string.h>
 
 #include "node.h"
+#include "type.h"
+
+void free_parameters(struct parameter *param)
+{
+    if (!param)
+        return;
+
+    free_parameters(param->next);
+    type_free(param->type);
+    free(param);
+}
 
 void free_if_part(struct if_part *part)
 {
@@ -59,6 +70,12 @@ void free_node(struct node *node)
 
     case NODE_UNARY_OP:
         free_node(((struct unary_op *)node)->expr);
+        break;
+
+    case NODE_FUNCTION_STATEMENT:
+        free_parameters(((struct function_statement *)node)->params);
+        type_free(((struct function_statement *)node)->type);
+        free_node(((struct function_statement *)node)->stmts);
         break;
 
     case NODE_IF_STATEMENT:
@@ -147,6 +164,24 @@ struct node *new_unary_op(int op, struct node *expr)
 
     node->op = op;
     node->expr = expr;
+
+    return &node->node;
+}
+
+struct node *new_function_statement(struct source_range *name,
+                                    struct parameter *params,
+                                    struct type *type, struct node *stmts)
+{
+    struct function_statement *node;
+
+    node = node_alloc(sizeof(*node), NODE_FUNCTION_STATEMENT);
+    if (!node)
+        return NULL;
+
+    memcpy(&node->name, name, sizeof(*name));
+    node->params = params;
+    node->type = type;
+    node->stmts = stmts;
 
     return &node->node;
 }

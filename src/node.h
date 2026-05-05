@@ -19,6 +19,7 @@ enum {
     NODE_IF_STATEMENT,
     NODE_WHILE_STATEMENT,
     NODE_RETURN_STATEMENT,
+    NODE_FUNCTION_STATEMENT,
 
     NODE_COUNT,
     NODE_FIRST = 0,
@@ -54,6 +55,21 @@ struct unary_op {
 
 struct source_range {
     const char *begin, *end;
+};
+
+struct parameter {
+    struct source_range name;
+    struct type *type;
+    struct parameter *next;
+};
+
+struct function_statement {
+    struct node node;
+
+    struct source_range name;
+    struct parameter *params;
+    struct type *type;
+    struct node *stmts;
 };
 
 struct if_part {
@@ -97,6 +113,7 @@ struct while_statement {
 };
 
 void free_node(struct node *node);
+void free_parameters(struct parameter *params);
 void free_if_part(struct if_part *part);
 void free_elif_parts(struct elif_part *parts);
 void free_else_part(struct else_part *part);
@@ -108,6 +125,9 @@ struct node *new_number(const char *begin, const char *end);
 struct node *new_binary_op(int op, struct node *left, struct node *right);
 struct node *new_unary_op(int op, struct node *expr);
 
+struct node *new_function_statement(struct source_range *name,
+                                    struct parameter *params,
+                                    struct type *type, struct node *stmts);
 struct node *new_if_statement(struct if_part *if_part,
                     struct elif_part *elif_parts, struct else_part *else_part);
 struct node *new_return_statement(struct node *expr);

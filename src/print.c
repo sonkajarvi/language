@@ -10,6 +10,7 @@
 #include "node.h"
 #include "op.h"
 #include "token.h"
+#include "type.h"
 
 #define INDENT_STRING   "  "
 #define EMPTY_STRING    "---"
@@ -86,6 +87,58 @@ static void print_unary_op(struct unary_op *node, int depth)
     indent(depth + 1);
     printf("Expression:\n");
     print_node_depth(node->expr, depth + 2);
+}
+
+static void print_function_statement(struct function_statement *node, int depth)
+{
+    struct node *stmt;
+    struct parameter *param;
+
+    indent(depth);
+    printf("FunctionStatement:\n");
+
+    /* name */
+    indent(depth + 1);
+    printf("Name: ");
+    fwrite(node->name.begin, node->name.end - node->name.begin, 1, stdout);
+    printf("\n");
+
+    /* parameters */
+    indent(depth + 1);
+    printf("Parameters:\n");
+    if (node->params) {
+        for (param = node->params; param; param = param->next) {
+            indent(depth + 2);
+            printf("Parameter:\n");
+
+            /* name */
+            indent(depth + 3);
+            printf("Name: ");
+            fwrite(param->name.begin, param->name.end - param->name.begin, 1, stdout);
+            printf("\n");
+
+            /* type */
+            indent(depth + 3);
+            printf("Type: ");
+            type_print(param->type);
+            printf("\n");
+        }
+    } else {
+        indent(depth + 2);
+        printf("%s\n", EMPTY_STRING);
+    }
+
+    /* type */
+    indent(depth + 1);
+    printf("Type: ");
+    type_print(node->type);
+    printf("\n");
+
+    /* statements */
+    indent(depth + 1);
+    printf("Statements:\n");
+    for (stmt = node->stmts; stmt; stmt = stmt->next)
+        print_node_depth(stmt, depth + 2);
 }
 
 static void print_if_statement(struct if_statement *node, int depth)
@@ -211,6 +264,10 @@ void print_node_depth(struct node *node, int depth)
 
     case NODE_UNARY_OP:
         print_unary_op((struct unary_op *)node, depth);
+        break;
+
+    case NODE_FUNCTION_STATEMENT:
+        print_function_statement((struct function_statement *)node, depth);
         break;
 
     case NODE_IF_STATEMENT:
