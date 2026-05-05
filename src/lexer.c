@@ -372,7 +372,9 @@ struct token *advance_token(struct parser *parser)
     memcpy(&parser->tok_curr, &parser->tok_next, sizeof(parser->tok_curr));
     parser->tok_next.type = TOKEN_NONE;
 
-    parser->has_peeked = false;
     parser->pointer += parser->tok_peeked_chars;
+    parser->column += parser->tok_peeked_chars;
+    parser->has_peeked = false;
+
     return &parser->tok_curr;
 }
