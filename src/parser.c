@@ -238,6 +238,10 @@ static struct node *parse_statements_part(struct parser *parser)
     /* statement */
     tok = peek_token(parser);
     switch (tok->type) {
+    case TOKEN_FUN:
+        stmt = parse_function_statement(parser);
+        break;
+
     case TOKEN_IF:
         stmt = parse_if_statement(parser);
         break;
@@ -290,6 +294,192 @@ struct node *parse_statements(struct parser *parser)
     return stmts;
 
 err:
+    free_node(stmts);
+    return NULL;
+}
+
+/*
+ * parameter = identifier ws ":" ws type
+ */
+static struct parameter *parse_parameter(struct parser *parser)
+{
+    struct token *token;
+    struct source_range name;
+    struct type *type;
+    struct parameter *param;
+
+    skip_whitespace(parser);
+
+    /* name */
+    token = peek_token(parser);
+    if (token->type != TOKEN_IDENTIFIER) {
+        parser->errno = EXPECTED_IDENTIFIER;
+        return NULL;
+    }
+
+    name.begin = token->begin;
+    name.end = token->end;
+
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* : */
+    token = peek_token(parser);
+    if (token->type != TOKEN_COLON) {
+        parser->errno = EXPECTED_COLON;
+        return NULL;
+    }
+
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* type */
+    type = parse_type(parser);
+    if (!type)
+        return NULL;
+
+    param = calloc(1, sizeof(*param));
+    if (!param) {
+        type_free(type);
+        parser->errno = OUT_OF_MEMORY;
+        return NULL;
+    }
+
+    memcpy(&param->name, &name, sizeof(name));
+    param->type = type;
+
+    return param;
+}
+
+/*
+ * parameters = parameter *( ws "," ws parameter )
+ */
+static struct parameter *parse_parameters(struct parser *parser)
+{
+    struct parameter *params, **tmp;
+
+    /*
+     * If the next token isn't an identifier, we interpret that to mean that
+     * we have no parameters either.
+     */
+    skip_whitespace(parser);
+    if (peek_token(parser)->type != TOKEN_IDENTIFIER)
+        return NULL;
+
+    params = parse_parameter(parser);
+    if (parser->errno != 0)
+        return NULL;
+
+    tmp = params ? &params->next : &params;
+    skip_whitespace(parser);
+
+    while (peek_token(parser)->type == TOKEN_COMMA) {
+        advance_token(parser);
+        skip_whitespace(parser);
+
+        *tmp = parse_parameter(parser);
+        if (parser->errno != 0)
+            goto err;
+        if (*tmp)
+            tmp = &((*tmp)->next);
+    }
+
+    return params;
+
+err:
+    free_parameters(params);
+    return NULL;
+}
+
+/*
+ * function-statement = fun-keyword ws identifier ws "(" ws [ parameters ws ] ")"
+ *                      [ ws ":" ws type ] eol newline
+ *                      statements
+ *                      ws end-keyword
+ */
+struct node *parse_function_statement(struct parser *parser)
+{
+    struct token *token;
+    struct source_range name;
+    struct parameter *params;
+    struct type *type;
+    struct node *ret, *stmts = NULL;
+
+    /* fun */
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* identifier */
+    token = peek_token(parser);
+    if (token->type != TOKEN_IDENTIFIER) {
+        parser->errno = EXPECTED_IDENTIFIER;
+        return NULL;
+    }
+
+    name.begin = token->begin;
+    name.end = token->end;
+
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* left parenthesis */
+    token = peek_token(parser);
+    if (token->type != TOKEN_PAREN_LEFT) {
+        parser->errno = EXPECTED_LEFT_PARENTHESIS;
+        return NULL;
+    }
+
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* parameters */
+    params = parse_parameters(parser);
+    if (!params && parser->errno != 0)
+        return NULL;
+
+    /* right parenthesis */
+    token = peek_token(parser);
+    if (token->type != TOKEN_PAREN_RIGHT) {
+        parser->errno = EXPECTED_RIGHT_PARENTHESIS;
+        goto err;
+    }
+
+    advance_token(parser);
+    skip_whitespace(parser);
+
+    /* type */
+    token = peek_token(parser);
+    if (token->type == TOKEN_COLON) {
+        advance_token(parser);
+        skip_whitespace(parser);
+
+        type = parse_type(parser);
+        if (!type)
+            goto err;
+    }
+
+    skip_eol(parser);
+
+    /* newline */
+    if (!is_newline_sequence(parser)) {
+        parser->errno = EXPECTED_NEWLINE;
+        goto err;
+    }
+
+    /* statements */
+    stmts = parse_statements(parser);
+    if (!stmts && parser->errno != 0)
+        goto err;
+
+    ret = new_function_statement(&name, params, type, stmts);
+    if (ret)
+        return ret;
+
+    parser->errno = OUT_OF_MEMORY;
+
+err:
+    type_free(type);
+    free_parameters(params);
     free_node(stmts);
     return NULL;
 }

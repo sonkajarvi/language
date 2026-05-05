@@ -20,6 +20,7 @@
 enum {
     EXPECTED_EXPRESSION = 1,
     EXPECTED_RIGHT_PARENTHESIS,
+    EXPECTED_LEFT_PARENTHESIS,
     EXPECTED_LET,
     EXPECTED_IDENTIFIER,
     EXPECTED_ASSIGN,
@@ -27,6 +28,7 @@ enum {
     EXPECTED_IF,
     EXPECTED_END,
     EXPECTED_TYPE,
+    EXPECTED_COLON,
 
     OUT_OF_MEMORY,
 };
@@ -73,6 +75,7 @@ void skip_whitespace(struct parser *parser);
 struct node *parse_expression(struct parser *parser);
 struct node *parse_statements(struct parser *parser);
 
+struct node *parse_function_statement(struct parser *parser);
 struct node *parse_if_statement(struct parser *parser);
 struct node *parse_return_statement(struct parser *parser);
 struct node *parse_variable_statement(struct parser *parser);
