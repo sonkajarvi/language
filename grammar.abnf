@@ -44,10 +44,10 @@ for-statement = for-keyword ws identifier ws "=" ws expression
                 statements
                 ws end-keyword
 
-function-statement = fun-keyword ws identifier ws parameters ws ":" ws type eol newline
+function-statement = fun-keyword ws identifier ws parameters [ ws ":" ws type ] eol newline
                      statements
                      ws end-keyword
-parameters = "(" ws parameter *( ws "," ws parameter ) ws ")"
+parameters = "(" ws [ parameter *( ws "," ws parameter ) ws ] ")"
 parameter = identifier ws ":" ws type
 
 if-statement = if-keyword ws expression eol newline statements
