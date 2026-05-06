@@ -19,6 +19,7 @@ ws-char =/ %x20                 ; space
 
 newline = [ %x0d ] %x0a         ; \r \n
 eol = ws [ comment ]
+wseol = *( ws-char / [ comment ] newline )
 
 comment = comment-start *comment-char
 comment-start = %x23            ; #
@@ -98,8 +99,10 @@ bitwise-expression = primary-expression ws "<<" ws primary-expression
 bitwise-expression = primary-expression ws ">>" ws primary-expression
 
 primary-expression = "(" ws expression ws ")"
-primary-expression =/ bool / int / identifier
+primary-expression =/ literal / identifier
 primary-expression =/ ( "-" / "~" / "!" ) ws primary-expression
+
+literal = bool / int / real / string / array / map
 
 ;
 ; Types
@@ -136,10 +139,43 @@ bool = true-keyword / false-keyword
 ;
 int = "0" / %x31-39 *DIGIT          ; 1-9
 
-; TODO: Reals
-; TODO: Strings
-; TODO: Arrays
-; TODO: Maps
+;
+; Reals
+; -----
+;
+real = int "." 1*DIGIT
+
+;
+; Strings
+; -------
+;
+string = %x22 *string-char %x22             ; "
+string-char = unescaped-char / escaped-char
+
+unescaped-char = %x20-21 / %x23-5b / %x5d-10ffff
+escaped-char = %x5c escape-char             ; \
+
+escape-char = %x22          ; "
+escape-char =/ %x5c         ; \
+escape-char =/ %x62         ; b
+escape-char =/ %x66         ; f
+escape-char =/ %x6e         ; n
+escape-char =/ %x72         ; r
+escape-char =/ %x74         ; t
+escape-char =/ %x76         ; v
+
+;
+; Arrays
+; ------
+;
+array = "[" wseol [ literal *( ws "," wseol literal ) wseol ] "]"
+
+;
+; Maps
+; ----
+;
+map = "{" wseol [ map-pair *( ws "," wseol map-pair ) wseol ] "}"
+map-pair = literal ws ":" ws literal
 
 ;
 ; Keywords
