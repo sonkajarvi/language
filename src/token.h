@@ -15,7 +15,7 @@
 /*
  * New keywords aren't added that often, so this can be defined just like this.
  */
-#define KEYWORD_COUNT 15
+#define KEYWORD_COUNT 18
 
 #define TOKEN_LIST(x)                                                           \
     x(NONE)                     /* This is first so it's always 0. */           \
@@ -47,6 +47,7 @@
     x(IDENTIFIER)                                                               \
     x(IF)                       /* if */                                        \
     x(INT)                      /* int */                                       \
+    x(INT_LITERAL)                                                              \
     x(LET)                      /* let */                                       \
     x(LESS_THAN)                /* < */                                         \
     x(LESS_THAN_EQUALS)         /* <= */                                        \
@@ -60,8 +61,10 @@
     x(PAREN_LEFT)               /* ( */                                         \
     x(PAREN_RIGHT)              /* ) */                                         \
     x(REAL)                     /* real */                                      \
+    x(REAL_LITERAL)                                                             \
     x(RETURN)                   /* return */                                    \
     x(STRING)                   /* string */                                    \
+    x(STRING_LITERAL)                                                           \
     x(SUBTRACT)                 /* - */                                         \
     x(TRUE)                     /* true */                                      \
     x(WHILE)                    /* while */
