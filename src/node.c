@@ -139,6 +139,21 @@ struct node *new_number(const char *begin, const char *end)
     return TO_NODE(node);
 }
 
+struct node *new_literal(int hint, const char *begin, const char *end)
+{
+    struct literal *node;
+
+    node = node_alloc(sizeof(*node), NODE_LITERAL);
+    if (!node)
+        return NULL;
+
+    node->info = hint;
+    node->begin = begin;
+    node->end = end;
+
+    return TO_NODE(node);
+}
+
 struct node *new_binary_op(int op, struct node *left, struct node *right)
 {
     struct binary_op *node;

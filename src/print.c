@@ -44,6 +44,39 @@ static void print_identifier(struct identifier *node, int depth)
     putchar('\n');
 }
 
+static void print_literal(struct literal *node, int depth)
+{
+    indent(depth);
+
+    switch (node->info) {
+    case LITERAL_INFO_TRUE:
+        printf("Bool: true\n");
+        break;
+
+    case LITERAL_INFO_FALSE:
+        printf("Bool: false\n");
+        break;
+
+    case LITERAL_INFO_INT:
+        printf("Int: ");
+        fwrite(node->begin, node->end - node->begin, 1, stdout);
+        printf("\n");
+        break;
+
+    case LITERAL_INFO_REAL:
+        printf("Real: ");
+        fwrite(node->begin, node->end - node->begin, 1, stdout);
+        printf("\n");
+        break;
+
+    case LITERAL_INFO_STRING:
+        printf("String: \"");
+        fwrite(node->begin, node->end - node->begin, 1, stdout);
+        printf("\"\n");
+        break;
+    }
+}
+
 static void print_number(struct number *node, int depth)
 {
     indent(depth);
@@ -256,6 +289,10 @@ void print_node_depth(struct node *node, int depth)
 
     case NODE_NUMBER:
         print_number(FROM_NODE(node), depth);
+        break;
+
+    case NODE_LITERAL:
+        print_literal(FROM_NODE(node), depth);
         break;
 
     case NODE_BINARY_OP:

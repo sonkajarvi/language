@@ -8,6 +8,9 @@
 #ifndef __SRC_NODE_H
 #define __SRC_NODE_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include "type.h"
 
 /**
@@ -31,6 +34,7 @@
 enum {
     NODE_IDENTIFIER,
     NODE_NUMBER,
+    NODE_LITERAL,
     NODE_BINARY_OP,
     NODE_UNARY_OP,
     NODE_VARIABLE_STATEMENT,
@@ -56,6 +60,21 @@ struct identifier {
 
 struct number {
     struct node node;
+    const char *begin, *end;
+};
+
+enum {
+    LITERAL_INFO_TRUE,
+    LITERAL_INFO_FALSE,
+    LITERAL_INFO_INT,
+    LITERAL_INFO_REAL,
+    LITERAL_INFO_STRING,
+};
+
+struct literal {
+    struct node node;
+
+    int info;
     const char *begin, *end;
 };
 
@@ -142,6 +161,14 @@ struct node *new_identifier(const char *begin, const char *end);
 struct node *new_number(const char *begin, const char *end);
 struct node *new_binary_op(int op, struct node *left, struct node *right);
 struct node *new_unary_op(int op, struct node *expr);
+
+struct node *new_literal(int hint, const char *begin, const char *end);
+
+static inline struct node *new_bool_literal(bool value)
+{
+    return new_literal(
+                value ? LITERAL_INFO_TRUE : LITERAL_INFO_FALSE, NULL, NULL);
+}
 
 struct node *new_function_statement(struct source_range *name,
                                     struct parameter *params,
