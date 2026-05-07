@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(test
     "main.c"
+    "token_test.c"
 )
 
 target_include_directories(test PRIVATE
