@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "bits.h"
 #include "type.h"
 
 /**
@@ -33,19 +34,19 @@
 
 enum {
     NODE_IDENTIFIER,
+
+    NODE_BINARY_OP,
     NODE_NUMBER,
     NODE_LITERAL,
-    NODE_BINARY_OP,
     NODE_UNARY_OP,
-    NODE_VARIABLE_STATEMENT,
-    NODE_IF_STATEMENT,
-    NODE_WHILE_STATEMENT,
-    NODE_RETURN_STATEMENT,
-    NODE_FUNCTION_STATEMENT,
 
-    NODE_COUNT,
-    NODE_FIRST = 0,
-    NODE_LAST = NODE_COUNT - 1
+    NODE_FUNCTION_STATEMENT,
+    NODE_IF_STATEMENT,
+    NODE_RETURN_STATEMENT,
+    NODE_VARIABLE_STATEMENT,
+    NODE_WHILE_STATEMENT,
+
+    ENUM_BITS(NODE)
 };
 
 struct node {
