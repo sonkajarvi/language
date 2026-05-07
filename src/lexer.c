@@ -129,29 +129,60 @@ void skip_whitespace(struct parser *parser)
         advance(parser);
 }
 
-static int peek_numeric_literal(struct parser *parser)
+/*
+ * int = "0" / %x31-39 *DIGIT          ; 1-9
+ * real = int "." 1*DIGIT
+ */
+static int peek_int_or_real_literal(struct parser *parser)
 {
-    int chr, offset = 0;
+    int chr, int_offset = 0, real_offset = 0;
 
     parser->tok_next.begin = parser->pointer;
 
+    /*
+     * The integer part.
+     */
     if (peek(parser) == '0') {
-        offset = 1;
+        int_offset = 1;
     } else {
         for (;;) {
-            chr = peek_offset(parser, offset);
+            chr = peek_offset(parser, int_offset);
             if (chr < '0' || chr > '9')
                 break;
-            offset++;
+            int_offset++;
         }
     }
 
-    parser->tok_next.end = parser->tok_next.begin + offset;
-    if (parser->tok_next.begin == parser->tok_next.end)
+    /* No integer part. */
+    if (!int_offset)
         return -1;
 
-    parser->tok_next.type = TOKEN_NUMBER;
-    parser->tok_peeked_chars = offset;
+    real_offset = int_offset;
+
+    /*
+     * The decimal part.
+     */
+    if (peek_offset(parser, real_offset) != '.')
+        goto skip;
+
+    real_offset++;
+
+    for (;;) {
+        chr = peek_offset(parser, real_offset);
+        if (chr < '0' || chr > '9')
+            break;
+        real_offset++;
+    }
+
+    /* No decimal part. */
+    if (int_offset == real_offset - 1)
+        return -1;
+
+skip:
+    parser->tok_next.end = parser->tok_next.begin + real_offset;
+    parser->tok_next.type = int_offset == real_offset
+                                    ? TOKEN_INT_LITERAL : TOKEN_REAL_LITERAL;
+    parser->tok_peeked_chars = real_offset;
 
     return 0;
 }
@@ -328,7 +359,7 @@ struct token *peek_token(struct parser *parser)
         break;
 
     case '0' ... '9':
-        if (peek_numeric_literal(parser) != 0)
+        if (peek_int_or_real_literal(parser) != 0)
             tok = NULL;
         break;
 
