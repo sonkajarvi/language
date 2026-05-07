@@ -1,10 +1,11 @@
 #include <stddef.h>
-
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#include <string.h>
 
 #include "src/parser.h"
 #include "src/token.h"
 #include "test.h"
+
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
 #define TEST_TOKEN(name, source, expected)                                      \
     TEST(token, name)                                                           \
@@ -61,3 +62,26 @@ TEST_TOKEN(keyword_real,   "real",   TOKEN_REAL);
 TEST_TOKEN(keyword_string, "string", TOKEN_STRING);
 TEST_TOKEN(keyword_true,   "true",   TOKEN_TRUE);
 TEST_TOKEN(keyword_while,  "while",  TOKEN_WHILE);
+
+#define TEST_VALUE(name, source, expected)                                      \
+    TEST(token, name)                                                           \
+    {                                                                           \
+        struct parser *parser = parser_create(source, ARRAY_SIZE(source) - 1);  \
+        struct token *token = peek_token(parser);                               \
+        EXPECT(token->type == expected);                                        \
+        EXPECT(strlen(source) == token->end - token->begin);                    \
+        EXPECT(strcmp(source, token->begin) == 0);                              \
+        parser_destroy(parser);                                                 \
+    }
+
+/*
+ * ints
+ */
+TEST_VALUE(int_zero, "0", TOKEN_INT_LITERAL);
+TEST_VALUE(int_nonzero, "8675309", TOKEN_INT_LITERAL);
+
+/*
+ * reals
+ */
+TEST_VALUE(real_zero, "0.0", TOKEN_REAL_LITERAL);
+TEST_VALUE(real_nonzero, "3.14159", TOKEN_REAL_LITERAL);
