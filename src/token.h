@@ -12,7 +12,10 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define KEYWORD_COUNT 13
+/*
+ * New keywords aren't added that often, so this can be defined just like this.
+ */
+#define KEYWORD_COUNT 15
 
 #define TOKEN_LIST(x)                                                           \
     x(NONE)                     /* This is first so it's always 0. */           \
@@ -36,6 +39,7 @@
     x(ELSE)                     /* else */                                      \
     x(END)                      /* end */                                       \
     x(EQUALS)                   /* == */                                        \
+    x(FALSE)                    /* false */                                     \
     x(FOR)                      /* for */                                       \
     x(FUN)                      /* fun */                                       \
     x(GREATER_THAN)             /* > */                                         \
@@ -59,6 +63,7 @@
     x(RETURN)                   /* return */                                    \
     x(STRING)                   /* string */                                    \
     x(SUBTRACT)                 /* - */                                         \
+    x(TRUE)                     /* true */                                      \
     x(WHILE)                    /* while */
 
 enum {

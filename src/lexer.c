@@ -190,6 +190,7 @@ void init_keywords(void)
     X("elif", TOKEN_ELIF);
     X("else", TOKEN_ELSE);
     X("end", TOKEN_END);
+    X("false", TOKEN_FALSE);
     X("for", TOKEN_FOR);
     X("fun", TOKEN_FUN);
     X("if", TOKEN_IF);
@@ -198,6 +199,7 @@ void init_keywords(void)
     X("real", TOKEN_REAL);
     X("return", TOKEN_RETURN);
     X("string", TOKEN_STRING);
+    X("true", TOKEN_TRUE);
     X("while", TOKEN_WHILE);
 
 #undef X
