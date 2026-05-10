@@ -258,3 +258,25 @@ struct node *new_while_statement(struct node *test, struct node *stmts)
 
     return TO_NODE(node);
 }
+
+void walk_nodes(struct node *node, void *p,
+                void (*fn)(struct node *node, void *p))
+{
+    switch (node->type) {
+    /* These don't have any children. */
+    case NODE_IDENTIFIER:
+    case NODE_LITERAL:
+        break;
+
+    case NODE_BINARY_OP:
+        fn(FROM_NODE_AS(node, struct binary_op)->expr, p);
+        fn(FROM_NODE_AS(node, struct binary_op)->expr->next, p);
+        break;
+
+    case NODE_UNARY_OP:
+        fn(FROM_NODE_AS(node, struct binary_op)->expr, p);
+        break;
+    }
+
+    fn(node, p);
+}

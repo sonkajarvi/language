@@ -157,6 +157,8 @@ void free_elif_parts(struct elif_part *parts);
 void free_else_part(struct else_part *part);
 
 void print_node(struct node *node);
+void walk_nodes(struct node *node, void *p,
+                void (*fn)(struct node *node, void *p));
 
 struct node *new_identifier(const char *begin, const char *end);
 struct node *new_number(const char *begin, const char *end);
